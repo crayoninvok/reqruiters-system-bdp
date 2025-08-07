@@ -1,0 +1,229 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(HR)
+  avatarUrl String?  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relation to track recruiter data created by this user
+  recruitersCreated RecruiterData[]
+}
+
+model RecruitmentForm {
+  id                 String            @id @default(cuid())
+  fullName           String
+  birthPlace         String
+  birthDate          DateTime
+  province           Province
+  heightCm           Int
+  weightKg           Int
+  shirtSize          ShirtSize
+  safetyShoesSize    SafetyShoesSize
+  pantsSize          PantsSize
+  address            String
+  whatsappNumber     String
+  certificate        Certificate[]
+  education          EducationLevel
+  schoolName         String
+  workExperience     String?
+  maritalStatus      MaritalStatus
+  appliedPosition    Position?          // New field for job position
+  status             RecruitmentStatus @default(PENDING)
+  documentPhotoUrl   String?           // Cloudinary URLs
+  documentCvUrl      String?
+  documentKtpUrl     String?
+  documentSkckUrl    String?
+  documentVaccineUrl String?
+  supportingDocsUrl  String?
+
+  experienceLevel    ExperienceLevel?
+  
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+}
+
+model RecruiterData {
+  id          String    @id @default(cuid())
+  fullName    String
+  email       String    @unique
+  phoneNumber String
+  address     String?
+  department  String?
+  position    String?
+  hireDate    DateTime?
+  employeeId  String?   @unique
+  notes       String?
+  
+  // Track who created this record
+  createdById String
+  createdBy   User      @relation(fields: [createdById], references: [id])
+  
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  @@index([department])
+  @@index([employeeId])
+}
+
+enum Role {
+  ADMIN
+  HR
+}
+
+enum Position {
+  PROD_ENG_SPV
+  PRODUCTION_GROUP_LEADER
+  MOCO_LEADER
+  CCR_ADMIN
+  DRIVER_DT
+  WEIGHT_BRIDGE_ADMIN
+  SIDE_DUMP_SPOTTER
+  PLAN_SPV
+  LOGISTIC_SPV
+  PLANNER
+  PLANT_GROUP_LEADER
+  TYRE_GROUP_LEADER
+  LOGISTIC_GROUP_LEADER
+  MECHANIC_JR
+  MECHANIC_SR
+  WELDER
+  ELECTRICIAN
+  TYREMAN
+  FABRICATION
+  OPERATOR_FUEL_TRUCK
+  PLANT_ADMIN
+  TYRE_ADMIN
+  LOGISTIC_ADMIN
+  HSE_SPV
+  SAFETY_OFFICER
+  ENVIRONMENT_OFFICER
+  PARAMEDIC
+  HSE_ADMIN
+  HRGA_GROUP_LEADER
+  GA_GROUP_LEADER
+  PDCA_OFFICER
+  PURCHASING_SPV
+  IT_SUPPORT
+  DOCTOR
+  PRODUCTION_DEPARTMENT_HEAD
+  HRGA_SPV
+  MECHANIC_INSTRUCTOR
+}
+
+enum Province {
+  ACEH
+  SUMATERA_UTARA
+  SUMATERA_BARAT
+  RIAU
+  JAMBI
+  SUMATERA_SELATAN
+  BENGKULU
+  LAMPUNG
+  KEP_BANGKA_BELITUNG
+  KEP_RIAU
+  DKI_JAKARTA
+  JAWA_BARAT
+  JAWA_TENGAH
+  DI_YOGYAKARTA
+  JAWA_TIMUR
+  BANTEN
+  BALI
+  NUSA_TENGGARA_BARAT
+  NUSA_TENGGARA_TIMUR
+  KALIMANTAN_BARAT
+  KALIMANTAN_TENGAH
+  KALIMANTAN_SELATAN
+  KALIMANTAN_TIMUR
+  KALIMANTAN_UTARA
+  SULAWESI_UTARA
+  SULAWESI_TENGAH
+  SULAWESI_SELATAN
+  SULAWESI_TENGGARA
+  GORONTALO
+  SULAWESI_BARAT
+  MALUKU
+  MALUKU_UTARA
+  PAPUA
+  PAPUA_BARAT
+}
+
+enum ShirtSize {
+  XS
+  S
+  M
+  L
+  XL
+  XXL
+  XXXL
+}
+
+enum SafetyShoesSize {
+  SIZE_38
+  SIZE_39
+  SIZE_40
+  SIZE_41
+  SIZE_42
+  SIZE_43
+  SIZE_44
+}
+
+enum PantsSize {
+  SIZE_28
+  SIZE_29
+  SIZE_30
+  SIZE_31
+  SIZE_32
+  SIZE_33
+  SIZE_34
+  SIZE_35
+  SIZE_36
+}
+
+enum Certificate {
+  AHLI_K3
+  OPERATOR_FORKLIFT
+  SERTIFIKAT_VAKSIN
+  NONE
+}
+
+enum EducationLevel {
+  SD
+  SMP
+  SMA
+  SMK
+  D3
+  S1
+  S2
+  S3
+}
+
+enum MaritalStatus {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+}
+
+enum RecruitmentStatus {
+  PENDING
+  ON_PROGRESS
+  COMPLETED
+}
+
+enum ExperienceLevel {
+  FRESH_GRADUATED
+  EXPERIENCED
+}
