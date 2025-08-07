@@ -16,13 +16,16 @@ export class AuthController {
       if (!user) {
         return res.status(404).json({ message: "User not found" });
       }
+
       const isPasswordValid = await compare(password, user.password);
       if (!isPasswordValid) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
+
       const token = sign({ id: user.id }, process.env.JWT_SECRET!, {
         expiresIn: "1h",
       });
+
       const cookieOptions = {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -30,13 +33,29 @@ export class AuthController {
       };
 
       res.cookie("token", token, cookieOptions);
-      return res.status(200).json({ message: "Login successful", token });
+
+      // Return both the token and user data
+      return res.status(200).json({ message: "Login successful", token, user });
     } catch (error) {
       console.error(error);
       return res.status(500).json({ message: "Internal server error" });
     }
   }
 
+  async logoutUser(req: Request, res: Response) {
+    try {
+      // Clear the cookie
+      res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+      });
+      return res.status(200).json({ message: "Logged out successfully" });
+    } catch (error) {
+      console.error("Logout error:", error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+  
   // User Registration
   async registerUser(req: Request, res: Response) {
     const { name, email, password } = req.body;
