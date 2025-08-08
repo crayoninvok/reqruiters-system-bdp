@@ -20,6 +20,10 @@ export class AuthRouter {
       "/register",
       this.authController.registerUser.bind(this.authController)
     );
+    this.router.post(
+      "/logout",
+      this.authController.logoutUser.bind(this.authController)
+    );
   }
   public getRouter(): Router {
     return this.router;
