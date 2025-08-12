@@ -6,13 +6,16 @@ const client_1 = require("@prisma/client");
 const prisma = new client_1.PrismaClient();
 const authMiddleware = async (req, res, next) => {
     try {
-        const token = req.cookies.token;
+        const token = req.headers.authorization?.split(" ")[1];
         if (!token) {
             return res.status(401).json({ message: "Authorization token is required" });
         }
         const decoded = (0, jsonwebtoken_1.verify)(token, process.env.JWT_SECRET);
+        if (decoded.exp && decoded.exp < Date.now() / 1000) {
+            return res.status(401).json({ message: "Token has expired" });
+        }
         const user = await prisma.user.findUnique({
-            where: { id: decoded.id }
+            where: { id: decoded.id },
         });
         if (!user) {
             return res.status(401).json({ message: "User not found" });

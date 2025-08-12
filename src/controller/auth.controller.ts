@@ -12,16 +12,24 @@ export class AuthController {
   const { email, password } = req.body;
 
   try {
+    // Validate request body
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
+
+    // Find user by email
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Validate password
     const isPasswordValid = await compare(password, user.password);
     if (!isPasswordValid) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
+    // Create JWT token
     const token = sign(
       { 
         id: user.id, 
@@ -33,21 +41,18 @@ export class AuthController {
       }
     );
 
-    const cookieOptions = {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 60 * 60 * 1000,
-    };
-
-    res.cookie("token", token, cookieOptions);
-
-    // Return both the token and user data
-    return res.status(200).json({ message: "Login successful", token, user });
+    // Return token in the response
+    return res.status(200).json({
+      message: "Login successful",
+      token, // Send the token in the response body
+      user
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Internal server error" });
   }
 }
+
 
   async logoutUser(req: Request, res: Response) {
     try {

@@ -14,6 +14,7 @@ const user_router_1 = require("./router/user.router");
 const reqruitment_router_1 = require("./router/reqruitment.router");
 const public_reqruitment_router_1 = require("./router/public-reqruitment.router");
 const analytics_router_1 = require("./router/analytics.router");
+const auth_middleware_1 = require("./middleware/auth.middleware");
 const PORT = 8000;
 const base_url_fe = process.env.BASE_URL_FE;
 const app = (0, express_1.default)();
@@ -21,7 +22,6 @@ app.use(express_1.default.json());
 app.use((0, cookie_parser_1.default)());
 app.use((0, cors_1.default)({
     origin: base_url_fe,
-    credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
 }));
@@ -29,10 +29,10 @@ const authRouter = new auth_router_1.AuthRouter();
 const userRouter = new user_router_1.UserRouter();
 const recruitmentFormRouter = new reqruitment_router_1.RecruitmentFormRouter();
 app.use("/api/auth", authRouter.getRouter());
-app.use("/api/user", userRouter.getRouter());
-app.use("/api/recruitment", recruitmentFormRouter.getRouter());
+app.use("/api/user", auth_middleware_1.authMiddleware, userRouter.getRouter());
+app.use("/api/recruitment", auth_middleware_1.authMiddleware, recruitmentFormRouter.getRouter());
 app.use("/api/public-recruitment", new public_reqruitment_router_1.PublicRecruitmentRouter().getRouter());
-app.use("/api/analytics", new analytics_router_1.AnalyticsRouter().getRouter());
+app.use("/api/analytics", auth_middleware_1.authMiddleware, new analytics_router_1.AnalyticsRouter().getRouter());
 app.get("/api", (req, res) => {
     res.send("Welcome to the API!");
 });

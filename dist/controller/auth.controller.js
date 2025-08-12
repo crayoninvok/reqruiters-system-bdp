@@ -14,6 +14,9 @@ class AuthController {
     async loginUser(req, res) {
         const { email, password } = req.body;
         try {
+            if (!email || !password) {
+                return res.status(400).json({ message: "Email and password are required" });
+            }
             const user = await prisma.user.findUnique({ where: { email } });
             if (!user) {
                 return res.status(404).json({ message: "User not found" });
@@ -28,13 +31,11 @@ class AuthController {
             }, process.env.JWT_SECRET, {
                 expiresIn: "1h",
             });
-            const cookieOptions = {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
-                maxAge: 60 * 60 * 1000,
-            };
-            res.cookie("token", token, cookieOptions);
-            return res.status(200).json({ message: "Login successful", token, user });
+            return res.status(200).json({
+                message: "Login successful",
+                token,
+                user
+            });
         }
         catch (error) {
             console.error(error);

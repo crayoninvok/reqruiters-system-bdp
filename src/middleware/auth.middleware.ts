@@ -1,32 +1,37 @@
 import { Request, Response, NextFunction } from "express";
-import { verify } from "jsonwebtoken";
-import { PrismaClient, User } from "@prisma/client";
+import { verify, JwtPayload } from "jsonwebtoken";
+import { PrismaClient } from "@prisma/client";
 
 // Initialize Prisma Client
 const prisma = new PrismaClient();
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from cookies instead of headers
-    const token = req.cookies.token;
+    // Get token from Authorization header (Bearer <token>)
+    const token = req.headers.authorization?.split(" ")[1]; // Extract the token from the header
 
     if (!token) {
       return res.status(401).json({ message: "Authorization token is required" });
     }
 
     // Verify the token
-    const decoded: any = verify(token, process.env.JWT_SECRET!);
+    const decoded = verify(token, process.env.JWT_SECRET!) as JwtPayload;
+
+    // Check if token has expired
+    if (decoded.exp && decoded.exp < Date.now() / 1000) {
+      return res.status(401).json({ message: "Token has expired" });
+    }
 
     // Get user from database
     const user = await prisma.user.findUnique({
-      where: { id: decoded.id }
+      where: { id: decoded.id },
     });
 
     if (!user) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Attach the user to the request object
+    // Attach user to the request object
     req.user = user;
 
     // Proceed to the next middleware or route handler

@@ -9,40 +9,45 @@ import { UserRouter } from "./router/user.router";
 import { RecruitmentFormRouter } from "./router/reqruitment.router";
 import { PublicRecruitmentRouter } from "./router/public-reqruitment.router";
 import { AnalyticsRouter } from "./router/analytics.router";
+import { authMiddleware } from "./middleware/auth.middleware"; // Importing authMiddleware
 
 const PORT: number = 8000;
-const base_url_fe = process.env.BASE_URL_FE;
+const base_url_fe = process.env.BASE_URL_FE; // Frontend URL from environment
 
+// Initialize Express app
 const app = express();
+
+// Middlewares
 app.use(express.json());
 app.use(cookieParser());
 
+// CORS configuration
 app.use(
   cors({
-    origin: base_url_fe,
-    credentials: true,
+    origin: base_url_fe, // Allow requests from the frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
-    allowedHeaders: ["Content-Type", "Authorization"],
+    allowedHeaders: ["Content-Type", "Authorization"], // Allow Authorization header
   })
 );
 
-// Initialize routers
+// Initialize Routers
 const authRouter = new AuthRouter();
 const userRouter = new UserRouter();
 const recruitmentFormRouter = new RecruitmentFormRouter();
 
-// Register routes
-app.use("/api/auth", authRouter.getRouter());
-app.use("/api/user", userRouter.getRouter());
-app.use("/api/recruitment", recruitmentFormRouter.getRouter());
-app.use("/api/public-recruitment", new PublicRecruitmentRouter().getRouter());
-app.use("/api/analytics", new AnalyticsRouter().getRouter());
+// Register Routes
+app.use("/api/auth", authRouter.getRouter());  // Authentication routes
+app.use("/api/user", authMiddleware, userRouter.getRouter()); // User routes (Protected)
+app.use("/api/recruitment", authMiddleware, recruitmentFormRouter.getRouter()); // Recruitment routes (Protected)
+app.use("/api/public-recruitment", new PublicRecruitmentRouter().getRouter()); // Public recruitment routes
+app.use("/api/analytics", authMiddleware, new AnalyticsRouter().getRouter()); // Analytics routes (Protected)
 
 // Base route
 app.get("/api", (req, res) => {
   res.send("Welcome to the API!");
 });
 
+// Start the server
 app.listen(PORT, () => {
   console.log(`Server is running on -> http://localhost:${PORT}/api`);
 });
