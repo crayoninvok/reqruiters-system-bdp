@@ -7,8 +7,8 @@ const prisma = new PrismaClient();
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    // Get token from Authorization header
-    const token = req.headers.authorization?.split(" ")[1]; // Bearer <token>
+    // Get token from cookies instead of headers
+    const token = req.cookies.token;
 
     if (!token) {
       return res.status(401).json({ message: "Authorization token is required" });

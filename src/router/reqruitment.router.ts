@@ -14,65 +14,82 @@ export class RecruitmentFormRouter {
   }
 
   private initializeRoutes() {
-    // Apply authentication middleware to all routes
-    this.router.use(authMiddleware);
-
     // Create recruitment form with file uploads
     this.router.post(
-      "/",
+      "/", authMiddleware,
       upload.fields([
-        { name: 'documentPhoto', maxCount: 1 },
-        { name: 'documentCv', maxCount: 1 },
-        { name: 'documentKtp', maxCount: 1 },
-        { name: 'documentSkck', maxCount: 1 },
-        { name: 'documentVaccine', maxCount: 1 },
-        { name: 'supportingDocs', maxCount: 1 }
+        { name: "documentPhoto", maxCount: 1 },
+        { name: "documentCv", maxCount: 1 },
+        { name: "documentKtp", maxCount: 1 },
+        { name: "documentSkck", maxCount: 1 },
+        { name: "documentVaccine", maxCount: 1 },
+        { name: "supportingDocs", maxCount: 1 },
       ]),
-      this.recruitmentFormController.createRecruitmentForm.bind(this.recruitmentFormController)
+      this.recruitmentFormController.createRecruitmentForm.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Get all recruitment forms (with pagination and filtering)
+    // Get all recruitment forms (with pagination and filtering) - AUTH REQUIRED
     this.router.get(
       "/",
-      this.recruitmentFormController.getRecruitmentForms.bind(this.recruitmentFormController)
+      authMiddleware,
+      this.recruitmentFormController.getRecruitmentForms.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Get recruitment statistics
+    // Get recruitment statistics - AUTH REQUIRED
     this.router.get(
       "/stats",
-      this.recruitmentFormController.getRecruitmentStats.bind(this.recruitmentFormController)
+      authMiddleware,
+      this.recruitmentFormController.getRecruitmentStats.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Get single recruitment form by ID
+    // Get single recruitment form by ID - AUTH REQUIRED
     this.router.get(
       "/:id",
-      this.recruitmentFormController.getRecruitmentFormById.bind(this.recruitmentFormController)
+      authMiddleware,
+      this.recruitmentFormController.getRecruitmentFormById.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Update recruitment form with file uploads
+    // Update recruitment form with file uploads - AUTH REQUIRED
     this.router.put(
       "/:id",
+      authMiddleware,
       upload.fields([
-        { name: 'documentPhoto', maxCount: 1 },
-        { name: 'documentCv', maxCount: 1 },
-        { name: 'documentKtp', maxCount: 1 },
-        { name: 'documentSkck', maxCount: 1 },
-        { name: 'documentVaccine', maxCount: 1 },
-        { name: 'supportingDocs', maxCount: 1 }
+        { name: "documentPhoto", maxCount: 1 },
+        { name: "documentCv", maxCount: 1 },
+        { name: "documentKtp", maxCount: 1 },
+        { name: "documentSkck", maxCount: 1 },
+        { name: "documentVaccine", maxCount: 1 },
+        { name: "supportingDocs", maxCount: 1 },
       ]),
-      this.recruitmentFormController.updateRecruitmentForm.bind(this.recruitmentFormController)
+      this.recruitmentFormController.updateRecruitmentForm.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Update recruitment status only (lightweight endpoint)
+    // Update recruitment status only - AUTH REQUIRED
     this.router.patch(
       "/:id/status",
-      this.recruitmentFormController.updateRecruitmentStatus.bind(this.recruitmentFormController)
+      authMiddleware,
+      this.recruitmentFormController.updateRecruitmentStatus.bind(
+        this.recruitmentFormController
+      )
     );
 
-    // Delete recruitment form
+    // Delete recruitment form - AUTH REQUIRED
     this.router.delete(
       "/:id",
-      this.recruitmentFormController.deleteRecruitmentForm.bind(this.recruitmentFormController)
+      authMiddleware,
+      this.recruitmentFormController.deleteRecruitmentForm.bind(
+        this.recruitmentFormController
+      )
     );
   }
 

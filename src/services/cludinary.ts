@@ -57,6 +57,11 @@ const storage = new CloudinaryStorage({
       return `${file.fieldname}-${uniqueSuffix}`;
     },
     resource_type: 'auto', // Auto-detect resource type (image, video, etc.)
+    // ADD THESE CRUCIAL SETTINGS:
+    access_mode: 'public', // Ensure public access
+    type: 'upload', // Use 'upload' type (not 'private')
+    use_filename: false, // Use generated public_id instead of filename
+    unique_filename: true, // Ensure unique filenames
   } as any,
 });
 
@@ -79,6 +84,40 @@ export const upload = multer({
     }
   }
 });
+
+// Helper function to generate public download URL
+export const getPublicDownloadUrl = (publicId: string, resourceType: 'image' | 'video' | 'raw' = 'raw') => {
+  return cloudinary.url(publicId, {
+    resource_type: resourceType,
+    type: 'upload',
+    flags: 'attachment', // Forces download instead of display
+    secure: true // Use HTTPS
+  });
+};
+
+// Helper function to generate signed download URL (more secure)
+export const getSignedDownloadUrl = (publicId: string, resourceType: 'image' | 'video' | 'raw' = 'raw') => {
+  const timestamp = Math.round(new Date().getTime() / 1000) + 3600; // Expires in 1 hour
+  
+  return cloudinary.utils.private_download_url(publicId, resourceType, {
+    expires_at: timestamp,
+    attachment: true // Force download
+  });
+};
+
+// Helper function to fix existing URLs for public access
+export const convertToPublicUrl = (cloudinaryUrl: string): string => {
+  if (!cloudinaryUrl.includes('res.cloudinary.com')) {
+    return cloudinaryUrl;
+  }
+
+  // Add attachment flag for download
+  if (cloudinaryUrl.includes('/upload/') && !cloudinaryUrl.includes('fl_attachment')) {
+    return cloudinaryUrl.replace('/upload/', '/upload/fl_attachment/');
+  }
+  
+  return cloudinaryUrl;
+};
 
 // Export cloudinary for direct use
 export { cloudinary };

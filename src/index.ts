@@ -1,5 +1,5 @@
-import dotenv from "dotenv"
-dotenv.config()
+import dotenv from "dotenv";
+dotenv.config();
 import express from "express";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -7,6 +7,8 @@ import "dotenv/config";
 import { AuthRouter } from "./router/auth.router";
 import { UserRouter } from "./router/user.router";
 import { RecruitmentFormRouter } from "./router/reqruitment.router";
+import { PublicRecruitmentRouter } from "./router/public-reqruitment.router";
+import { AnalyticsRouter } from "./router/analytics.router";
 
 const PORT: number = 8000;
 const base_url_fe = process.env.BASE_URL_FE;
@@ -29,11 +31,12 @@ const authRouter = new AuthRouter();
 const userRouter = new UserRouter();
 const recruitmentFormRouter = new RecruitmentFormRouter();
 
-
 // Register routes
 app.use("/api/auth", authRouter.getRouter());
 app.use("/api/user", userRouter.getRouter());
 app.use("/api/recruitment", recruitmentFormRouter.getRouter());
+app.use("/api/public-recruitment", new PublicRecruitmentRouter().getRouter());
+app.use("/api/analytics", new AnalyticsRouter().getRouter());
 
 // Base route
 app.get("/api", (req, res) => {
