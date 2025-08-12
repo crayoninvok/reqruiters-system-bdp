@@ -2,13 +2,13 @@
   "name": "backend-re",
   "version": "1.0.0",
   "main": "index.js",
-  "scripts": {
-    "start": "npm run build && node dist/index.js",
-    "dev": "ts-node-dev --respawn --pretty --transpile-only src/index.ts",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc && cp -rv public dist && cp -rv src/templates dist",
-    "postinstall": "prisma generate"
-  },
+ "scripts": {
+  "start": "npm run build && node dist/index.js",
+  "dev": "ts-node-dev --respawn --pretty --transpile-only src/index.ts",
+  "test": "echo \"Error: no test specified\" && exit 1",
+  "build": "tsc && cp -rv public dist",  
+  "postinstall": "prisma generate"
+},
   "keywords": [],
   "author": "",
   "license": "ISC",
