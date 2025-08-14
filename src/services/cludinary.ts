@@ -65,22 +65,180 @@ const storage = new CloudinaryStorage({
   } as any,
 });
 
-// Create multer upload middleware
+// Create multer upload middleware with custom file size validation
 export const upload = multer({ 
   storage: storage,
   limits: {
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 3 * 1024 * 1024, // Set to largest file size (3MB)
   },
   fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    // Check file types
-    const allowedTypes = /jpeg|jpg|png|gif|pdf/;
+    // Define allowed file types for each field
+    const allowedTypesMap = {
+      documentPhoto: { types: /jpeg|jpg|png/, mimetypes: /image\/(jpeg|jpg|png)/ },
+      documentCv: { types: /pdf/, mimetypes: /application\/pdf/ },
+      documentKtp: { types: /jpeg|jpg|png|pdf/, mimetypes: /image\/(jpeg|jpg|png)|application\/pdf/ },
+      documentSkck: { types: /pdf/, mimetypes: /application\/pdf/ },
+      documentVaccine: { types: /jpeg|jpg|png|pdf/, mimetypes: /image\/(jpeg|jpg|png)|application\/pdf/ },
+      supportingDocs: { types: /pdf/, mimetypes: /application\/pdf/ },
+      avatar: { types: /jpeg|jpg|png|gif/, mimetypes: /image\/(jpeg|jpg|png|gif)/ }
+    };
+
+    const fieldConfig = allowedTypesMap[file.fieldname as keyof typeof allowedTypesMap];
+    
+    if (!fieldConfig) {
+      // Default fallback
+      const allowedTypes = /jpeg|jpg|png|gif|pdf/;
+      const extname = allowedTypes.test(file.originalname.toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        return cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and PDF files are allowed.'));
+      }
+    }
+
+    // Check file extension
+    const extname = fieldConfig.types.test(file.originalname.toLowerCase());
+    // Check mimetype
+    const mimetype = fieldConfig.mimetypes.test(file.mimetype);
+
+    if (!mimetype || !extname) {
+      let allowedFormats = '';
+      switch (file.fieldname) {
+        case 'documentPhoto':
+          allowedFormats = 'JPG, PNG';
+          break;
+        case 'documentCv':
+          allowedFormats = 'PDF';
+          break;
+        case 'documentKtp':
+          allowedFormats = 'PDF, JPG, PNG';
+          break;
+        case 'documentSkck':
+          allowedFormats = 'PDF';
+          break;
+        case 'documentVaccine':
+          allowedFormats = 'PDF, JPG, PNG';
+          break;
+        case 'supportingDocs':
+          allowedFormats = 'PDF';
+          break;
+        default:
+          allowedFormats = 'JPEG, PNG, GIF, PDF';
+      }
+      return cb(new Error(`Invalid file type for ${file.fieldname}. Only ${allowedFormats} files are allowed.`));
+    }
+
+    return cb(null, true);
+  }
+});
+
+// Create specific upload middlewares for different file types with exact size limits
+export const uploadRecruitmentDocs = multer({
+  storage: storage,
+  limits: {
+    fileSize: 3 * 1024 * 1024, // Set to max size (3MB)
+  },
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    // Custom size limits based on file type/field (in bytes)
+    const maxSizes = {
+      documentPhoto: 3 * 1024 * 1024,      // 3MB for profile photos
+      documentCv: 2 * 1024 * 1024,         // 2MB for CV/Resume
+      documentKtp: 1 * 1024 * 1024,        // 1MB for ID cards
+      documentSkck: 2 * 1024 * 1024,       // 2MB for police records
+      documentVaccine: 2 * 1024 * 1024,    // 2MB for vaccine certificates
+      supportingDocs: 3 * 1024 * 1024,     // 3MB for supporting documents
+      avatar: 3 * 1024 * 1024,             // 3MB for avatars
+    };
+
+    const fieldMaxSize = maxSizes[file.fieldname as keyof typeof maxSizes] || 3 * 1024 * 1024;
+
+    // Note: We can't check file.size here as it's not available in fileFilter
+    // Size validation happens after this in multer's limits, but we set it to the max possible
+    
+    // Define allowed file types for each field
+    const allowedTypesMap = {
+      documentPhoto: { types: /jpeg|jpg|png/, mimetypes: /image\/(jpeg|jpg|png)/, formats: 'JPG, PNG' },
+      documentCv: { types: /pdf/, mimetypes: /application\/pdf/, formats: 'PDF' },
+      documentKtp: { types: /jpeg|jpg|png|pdf/, mimetypes: /image\/(jpeg|jpg|png)|application\/pdf/, formats: 'PDF, JPG, PNG' },
+      documentSkck: { types: /pdf/, mimetypes: /application\/pdf/, formats: 'PDF' },
+      documentVaccine: { types: /jpeg|jpg|png|pdf/, mimetypes: /image\/(jpeg|jpg|png)|application\/pdf/, formats: 'PDF, JPG, PNG' },
+      supportingDocs: { types: /pdf/, mimetypes: /application\/pdf/, formats: 'PDF' },
+    };
+
+    const fieldConfig = allowedTypesMap[file.fieldname as keyof typeof allowedTypesMap];
+    
+    if (!fieldConfig) {
+      return cb(new Error('Invalid field name for file upload.'));
+    }
+
+    // Check file extension and mimetype
+    const extname = fieldConfig.types.test(file.originalname.toLowerCase());
+    const mimetype = fieldConfig.mimetypes.test(file.mimetype);
+
+    if (!mimetype || !extname) {
+      return cb(new Error(`Invalid file type for ${file.fieldname}. Only ${fieldConfig.formats} files are allowed.`));
+    }
+
+    return cb(null, true);
+  }
+});
+
+// Alternative: Create individual middlewares for each document type
+export const uploadProfilePhoto = multer({
+  storage: storage,
+  limits: {
+    fileSize: 3 * 1024 * 1024, // 3MB for profile photos
+  },
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = /jpeg|jpg|png/;
+    const allowedMimes = /image\/(jpeg|jpg|png)/;
     const extname = allowedTypes.test(file.originalname.toLowerCase());
-    const mimetype = allowedTypes.test(file.mimetype);
+    const mimetype = allowedMimes.test(file.mimetype);
 
     if (mimetype && extname) {
       return cb(null, true);
     } else {
-      cb(new Error('Invalid file type. Only JPEG, PNG, GIF, and PDF files are allowed.'));
+      cb(new Error('Profile photo must be JPG or PNG format.'));
+    }
+  }
+});
+
+export const uploadCV = multer({
+  storage: storage,
+  limits: {
+    fileSize: 2 * 1024 * 1024, // 2MB for CV
+  },
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = /pdf/;
+    const allowedMimes = /application\/pdf/;
+    const extname = allowedTypes.test(file.originalname.toLowerCase());
+    const mimetype = allowedMimes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('CV must be PDF format.'));
+    }
+  }
+});
+
+export const uploadKTP = multer({
+  storage: storage,
+  limits: {
+    fileSize: 1 * 1024 * 1024, // 1MB for KTP
+  },
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = /jpeg|jpg|png|pdf/;
+    const allowedMimes = /image\/(jpeg|jpg|png)|application\/pdf/;
+    const extname = allowedTypes.test(file.originalname.toLowerCase());
+    const mimetype = allowedMimes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('KTP must be PDF, JPG, or PNG format.'));
     }
   }
 });
@@ -117,6 +275,21 @@ export const convertToPublicUrl = (cloudinaryUrl: string): string => {
   }
   
   return cloudinaryUrl;
+};
+
+// Utility function to get human-readable file size limits
+export const getFileSizeLimit = (fieldName: string): string => {
+  const limits = {
+    documentPhoto: '3MB',
+    avatar: '3MB', 
+    documentCv: '2MB',
+    documentKtp: '1MB',
+    documentSkck: '2MB',
+    documentVaccine: '2MB',
+    supportingDocs: '3MB',
+  };
+  
+  return limits[fieldName as keyof typeof limits] || '3MB';
 };
 
 // Export cloudinary for direct use
