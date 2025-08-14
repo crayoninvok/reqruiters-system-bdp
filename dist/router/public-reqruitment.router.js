@@ -11,7 +11,20 @@ class PublicRecruitmentRouter {
         this.initializeRoutes();
     }
     initializeRoutes() {
-        this.router.post("/submit", cludinary_1.upload.fields([
+        this.router.options("/submit", (req, res) => {
+            console.log('OPTIONS request for /submit received');
+            res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
+            res.header('Access-Control-Allow-Credentials', 'true');
+            res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+            res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+            res.sendStatus(200);
+        });
+        this.router.post("/submit", (req, res, next) => {
+            console.log('POST request for /submit received from:', req.headers.origin);
+            res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
+            res.header('Access-Control-Allow-Credentials', 'true');
+            next();
+        }, cludinary_1.upload.fields([
             { name: "documentPhoto", maxCount: 1 },
             { name: "documentCv", maxCount: 1 },
             { name: "documentKtp", maxCount: 1 },

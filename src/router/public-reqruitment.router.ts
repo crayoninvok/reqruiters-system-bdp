@@ -13,9 +13,27 @@ export class PublicRecruitmentRouter {
   }
 
   private initializeRoutes() {
-    // Submit recruitment form (with file uploads) - POST /api/public/recruitment/submit
+    // Add explicit CORS handling for the submit endpoint
+    this.router.options("/submit", (req, res) => {
+      console.log('OPTIONS request for /submit received');
+      res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
+      res.header('Access-Control-Allow-Credentials', 'true');
+      res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
+      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+      res.sendStatus(200);
+    });
+
+    // Submit recruitment form (with file uploads) - POST /api/public-recruitment/submit
     this.router.post(
       "/submit",
+      // Add CORS headers before multer middleware
+      (req, res, next) => {
+        console.log('POST request for /submit received from:', req.headers.origin);
+        res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        next();
+      },
+      // Then apply multer middleware
       upload.fields([
         { name: "documentPhoto", maxCount: 1 },
         { name: "documentCv", maxCount: 1 },
@@ -24,12 +42,13 @@ export class PublicRecruitmentRouter {
         { name: "documentVaccine", maxCount: 1 },
         { name: "supportingDocs", maxCount: 1 },
       ]),
+      // Finally the controller
       this.publicRecruitmentController.submitRecruitmentForm.bind(
         this.publicRecruitmentController
       )
     );
 
-    // Get form options (provinces, sizes, etc.) - GET /api/public/recruitment/options
+    // Get form options (provinces, sizes, etc.) - GET /api/public-recruitment/options
     this.router.get(
       "/options",
       this.publicRecruitmentController.getFormOptions.bind(
@@ -37,7 +56,7 @@ export class PublicRecruitmentRouter {
       )
     );
 
-    // Check application status by ID - GET /api/public/recruitment/status/:id
+    // Check application status by ID - GET /api/public-recruitment/status/:id
     this.router.get(
       "/status/:id",
       this.publicRecruitmentController.checkApplicationStatus.bind(
