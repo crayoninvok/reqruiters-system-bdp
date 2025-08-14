@@ -102,184 +102,186 @@ export class RecruitmentFormController {
 
   // Create new recruitment form
   async createRecruitmentForm(req: AuthenticatedRequest, res: Response) {
-  try {
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
-      return res.status(403).json({
-        message: "Access denied. Only HR or ADMIN can create recruitment forms",
-      });
-    }
-
-    const {
-      fullName,
-      birthPlace,
-      birthDate,
-      province,
-      heightCm,
-      weightKg,
-      shirtSize,
-      safetyShoesSize,
-      pantsSize,
-      address,
-      whatsappNumber,
-      certificate,
-      education,
-      schoolName,
-      workExperience,
-      maritalStatus,
-      appliedPosition, // Correct field name based on your Prisma schema
-      status = RecruitmentStatus.PENDING,
-      experienceLevel = "FRESH_GRADUATED", // Add experienceLevel with default value
-    } = req.body;
-
-    // Validate required fields
-    if (
-      !fullName ||
-      !birthPlace ||
-      !birthDate ||
-      !province ||
-      !heightCm ||
-      !weightKg ||
-      !shirtSize ||
-      !safetyShoesSize ||
-      !pantsSize ||
-      !address ||
-      !whatsappNumber ||
-      !education ||
-      !schoolName ||
-      !maritalStatus ||
-      !appliedPosition ||
-      !experienceLevel // Add check for experienceLevel
-    ) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-      });
-    }
-
-    // Validate enum fields
-    if (!Object.values(Province).includes(province)) {
-      return res.status(400).json({ message: "Invalid province" });
-    }
-    if (!Object.values(ShirtSize).includes(shirtSize)) {
-      return res.status(400).json({ message: "Invalid shirt size" });
-    }
-    if (!Object.values(SafetyShoesSize).includes(safetyShoesSize)) {
-      return res.status(400).json({ message: "Invalid safety shoes size" });
-    }
-    if (!Object.values(PantsSize).includes(pantsSize)) {
-      return res.status(400).json({ message: "Invalid pants size" });
-    }
-    if (!Object.values(EducationLevel).includes(education)) {
-      return res.status(400).json({ message: "Invalid education level" });
-    }
-    if (!Object.values(MaritalStatus).includes(maritalStatus)) {
-      return res.status(400).json({ message: "Invalid marital status" });
-    }
-
-    // Validate appliedPosition field
-    if (!Object.values(Position).includes(appliedPosition)) {
-      return res.status(400).json({ message: "Invalid applied position" });
-    }
-
-    // Validate experienceLevel field
-    if (!Object.values(ExperienceLevel).includes(experienceLevel)) {
-      return res.status(400).json({ message: "Invalid experience level" });
-    }
-
-    // Process certificate array
-    let certificateArray: Certificate[] = [];
-    if (certificate) {
-      if (Array.isArray(certificate)) {
-        certificateArray = certificate;
-      } else {
-        certificateArray = [certificate];
+    try {
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access denied. Only HR or ADMIN can create recruitment forms",
+        });
       }
 
-      for (const cert of certificateArray) {
-        if (!Object.values(Certificate).includes(cert)) {
-          return res
-            .status(400)
-            .json({ message: `Invalid certificate: ${cert}` });
-        }
-      }
-    }
-
-    // Validate numeric fields
-    const height = parseInt(heightCm);
-    const weight = parseInt(weightKg);
-    if (isNaN(height) || height < 100 || height > 250) {
-      return res
-        .status(400)
-        .json({ message: "Height must be between 100-250 cm" });
-    }
-    if (isNaN(weight) || weight < 30 || weight > 200) {
-      return res
-        .status(400)
-        .json({ message: "Weight must be between 30-200 kg" });
-    }
-
-    // Process file uploads
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    const documentUrls: any = {};
-
-    if (files) {
-      if (files.documentPhoto)
-        documentUrls.documentPhotoUrl = files.documentPhoto[0].path;
-      if (files.documentCv)
-        documentUrls.documentCvUrl = files.documentCv[0].path;
-      if (files.documentKtp)
-        documentUrls.documentKtpUrl = files.documentKtp[0].path;
-      if (files.documentSkck)
-        documentUrls.documentSkckUrl = files.documentSkck[0].path;
-      if (files.documentVaccine)
-        documentUrls.documentVaccineUrl = files.documentVaccine[0].path;
-      if (files.supportingDocs)
-        documentUrls.supportingDocsUrl = files.supportingDocs[0].path;
-    }
-
-    const newRecruitmentForm = await prisma.recruitmentForm.create({
-      data: {
-        fullName: fullName.trim(),
-        birthPlace: birthPlace.trim(),
-        birthDate: new Date(birthDate),
+      const {
+        fullName,
+        birthPlace,
+        birthDate,
         province,
-        heightCm: height,
-        weightKg: weight,
+        heightCm,
+        weightKg,
         shirtSize,
         safetyShoesSize,
         pantsSize,
-        address: address.trim(),
-        whatsappNumber: whatsappNumber.trim(),
-        certificate: certificateArray,
+        address,
+        whatsappNumber,
+        certificate,
         education,
-        schoolName: schoolName.trim(),
-        workExperience: workExperience?.trim(),
+        schoolName,
+        workExperience,
         maritalStatus,
-        status,
-        appliedPosition, // Apply the valid appliedPosition
-        experienceLevel, // Add the experienceLevel field
-        ...documentUrls,
-      },
-    });
+        appliedPosition, // Correct field name based on your Prisma schema
+        status = RecruitmentStatus.PENDING,
+        experienceLevel = "FRESH_GRADUATED", // Add experienceLevel with default value
+      } = req.body;
 
-    return res.status(201).json({
-      message: "Recruitment form created successfully",
-      recruitmentForm: newRecruitmentForm,
-    });
-  } catch (error: any) {
-    console.error("Error creating recruitment form:", error);
+      // Validate required fields
+      if (
+        !fullName ||
+        !birthPlace ||
+        !birthDate ||
+        !province ||
+        !heightCm ||
+        !weightKg ||
+        !shirtSize ||
+        !safetyShoesSize ||
+        !pantsSize ||
+        !address ||
+        !whatsappNumber ||
+        !education ||
+        !schoolName ||
+        !maritalStatus ||
+        !appliedPosition ||
+        !experienceLevel // Add check for experienceLevel
+      ) {
+        return res.status(400).json({
+          message: "All required fields must be provided",
+        });
+      }
 
-    // Cleanup uploaded files on error
-    if (req.files) {
+      // Validate enum fields
+      if (!Object.values(Province).includes(province)) {
+        return res.status(400).json({ message: "Invalid province" });
+      }
+      if (!Object.values(ShirtSize).includes(shirtSize)) {
+        return res.status(400).json({ message: "Invalid shirt size" });
+      }
+      if (!Object.values(SafetyShoesSize).includes(safetyShoesSize)) {
+        return res.status(400).json({ message: "Invalid safety shoes size" });
+      }
+      if (!Object.values(PantsSize).includes(pantsSize)) {
+        return res.status(400).json({ message: "Invalid pants size" });
+      }
+      if (!Object.values(EducationLevel).includes(education)) {
+        return res.status(400).json({ message: "Invalid education level" });
+      }
+      if (!Object.values(MaritalStatus).includes(maritalStatus)) {
+        return res.status(400).json({ message: "Invalid marital status" });
+      }
+
+      // Validate appliedPosition field
+      if (!Object.values(Position).includes(appliedPosition)) {
+        return res.status(400).json({ message: "Invalid applied position" });
+      }
+
+      // Validate experienceLevel field
+      if (!Object.values(ExperienceLevel).includes(experienceLevel)) {
+        return res.status(400).json({ message: "Invalid experience level" });
+      }
+
+      // Process certificate array
+      let certificateArray: Certificate[] = [];
+      if (certificate) {
+        if (Array.isArray(certificate)) {
+          certificateArray = certificate;
+        } else {
+          certificateArray = [certificate];
+        }
+
+        for (const cert of certificateArray) {
+          if (!Object.values(Certificate).includes(cert)) {
+            return res
+              .status(400)
+              .json({ message: `Invalid certificate: ${cert}` });
+          }
+        }
+      }
+
+      // Validate numeric fields
+      const height = parseInt(heightCm);
+      const weight = parseInt(weightKg);
+      if (isNaN(height) || height < 100 || height > 250) {
+        return res
+          .status(400)
+          .json({ message: "Height must be between 100-250 cm" });
+      }
+      if (isNaN(weight) || weight < 30 || weight > 200) {
+        return res
+          .status(400)
+          .json({ message: "Weight must be between 30-200 kg" });
+      }
+
+      // Process file uploads
       const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-      await this.cleanupFiles(files);
+      const documentUrls: any = {};
+
+      if (files) {
+        if (files.documentPhoto)
+          documentUrls.documentPhotoUrl = files.documentPhoto[0].path;
+        if (files.documentCv)
+          documentUrls.documentCvUrl = files.documentCv[0].path;
+        if (files.documentKtp)
+          documentUrls.documentKtpUrl = files.documentKtp[0].path;
+        if (files.documentSkck)
+          documentUrls.documentSkckUrl = files.documentSkck[0].path;
+        if (files.documentVaccine)
+          documentUrls.documentVaccineUrl = files.documentVaccine[0].path;
+        if (files.supportingDocs)
+          documentUrls.supportingDocsUrl = files.supportingDocs[0].path;
+      }
+
+      const newRecruitmentForm = await prisma.recruitmentForm.create({
+        data: {
+          fullName: fullName.trim(),
+          birthPlace: birthPlace.trim(),
+          birthDate: new Date(birthDate),
+          province,
+          heightCm: height,
+          weightKg: weight,
+          shirtSize,
+          safetyShoesSize,
+          pantsSize,
+          address: address.trim(),
+          whatsappNumber: whatsappNumber.trim(),
+          certificate: certificateArray,
+          education,
+          schoolName: schoolName.trim(),
+          workExperience: workExperience?.trim(),
+          maritalStatus,
+          status,
+          appliedPosition, // Apply the valid appliedPosition
+          experienceLevel, // Add the experienceLevel field
+          ...documentUrls,
+        },
+      });
+
+      return res.status(201).json({
+        message: "Recruitment form created successfully",
+        recruitmentForm: newRecruitmentForm,
+      });
+    } catch (error: any) {
+      console.error("Error creating recruitment form:", error);
+
+      // Cleanup uploaded files on error
+      if (req.files) {
+        const files = req.files as {
+          [fieldname: string]: Express.Multer.File[];
+        };
+        await this.cleanupFiles(files);
+      }
+
+      return res.status(500).json({
+        message: "Internal server error",
+      });
     }
-
-    return res.status(500).json({
-      message: "Internal server error",
-    });
   }
-}
-
 
   // Get all recruitment forms with pagination and filtering
   async getRecruitmentForms(req: AuthenticatedRequest, res: Response) {
@@ -297,6 +299,7 @@ export class RecruitmentFormController {
       const status = req.query.status as string;
       const province = req.query.province as string;
       const education = req.query.education as string;
+      const position = req.query.appliedPosition as string;
 
       const skip = (page - 1) * limit;
 
@@ -310,7 +313,9 @@ export class RecruitmentFormController {
           { address: { contains: search, mode: "insensitive" } },
         ];
       }
-
+      if (position && Object.values(Position).includes(position as Position)) {
+        whereClause.appliedPosition = position;
+      }
       if (
         status &&
         Object.values(RecruitmentStatus).includes(status as RecruitmentStatus)

@@ -215,6 +215,7 @@ class RecruitmentFormController {
             const status = req.query.status;
             const province = req.query.province;
             const education = req.query.education;
+            const position = req.query.appliedPosition;
             const skip = (page - 1) * limit;
             const whereClause = {};
             if (search) {
@@ -223,6 +224,9 @@ class RecruitmentFormController {
                     { whatsappNumber: { contains: search } },
                     { address: { contains: search, mode: "insensitive" } },
                 ];
+            }
+            if (position && Object.values(client_1.Position).includes(position)) {
+                whereClause.appliedPosition = position;
             }
             if (status &&
                 Object.values(client_1.RecruitmentStatus).includes(status)) {

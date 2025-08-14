@@ -32,9 +32,25 @@ class AnalyticsController {
     }
     async getApplicationsByStatus(req, res) {
         try {
+            const { position, startDate, endDate } = req.query;
+            const whereClause = {};
+            if (position && position !== 'all') {
+                const dbPosition = position.replace(/\s+/g, '_').toUpperCase();
+                whereClause.appliedPosition = dbPosition;
+            }
+            if (startDate || endDate) {
+                whereClause.createdAt = {};
+                if (startDate) {
+                    whereClause.createdAt.gte = new Date(startDate);
+                }
+                if (endDate) {
+                    whereClause.createdAt.lte = new Date(endDate);
+                }
+            }
             const statusBreakdown = await prisma.recruitmentForm.groupBy({
                 by: ['status'],
-                _count: { status: true }
+                _count: { status: true },
+                where: whereClause
             });
             const formattedData = statusBreakdown.map(item => ({
                 status: item.status,

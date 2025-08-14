@@ -40,24 +40,49 @@ export class AnalyticsController {
   }
 
   // Applications by status breakdown
-  async getApplicationsByStatus(req: Request, res: Response) {
-    try {
-      const statusBreakdown = await prisma.recruitmentForm.groupBy({
-        by: ['status'],
-        _count: { status: true }
-      });
+// Updated getApplicationsByStatus method
+async getApplicationsByStatus(req: Request, res: Response) {
+  try {
+    const { position, startDate, endDate } = req.query;
 
-      const formattedData = statusBreakdown.map(item => ({
-        status: item.status,
-        count: item._count.status
-      }));
+    // Build dynamic filter conditions
+    const whereClause: any = {};
 
-      return res.status(200).json(formattedData);
-    } catch (error) {
-      console.error(error);
-      return res.status(500).json({ message: "Internal server error" });
+    // Filter by position if provided
+    if (position && position !== 'all') {
+      // Convert frontend position format to database enum format
+      const dbPosition = (position as string).replace(/\s+/g, '_').toUpperCase();
+      whereClause.appliedPosition = dbPosition;
     }
+
+    // Filter by date range if provided
+    if (startDate || endDate) {
+      whereClause.createdAt = {};
+      if (startDate) {
+        whereClause.createdAt.gte = new Date(startDate as string);
+      }
+      if (endDate) {
+        whereClause.createdAt.lte = new Date(endDate as string);
+      }
+    }
+
+    const statusBreakdown = await prisma.recruitmentForm.groupBy({
+      by: ['status'],
+      _count: { status: true },
+      where: whereClause
+    });
+
+    const formattedData = statusBreakdown.map(item => ({
+      status: item.status,
+      count: item._count.status
+    }));
+
+    return res.status(200).json(formattedData);
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Internal server error" });
   }
+}
 
   // Applications by position
   async getApplicationsByPosition(req: Request, res: Response) {
