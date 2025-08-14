@@ -34,7 +34,12 @@ class AuthController {
             return res.status(200).json({
                 message: "Login successful",
                 token,
-                user
+                user: {
+                    id: user.id,
+                    name: user.name,
+                    email: user.email,
+                    role: user.role
+                }
             });
         }
         catch (error) {
@@ -44,11 +49,9 @@ class AuthController {
     }
     async logoutUser(req, res) {
         try {
-            res.clearCookie("token", {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === "production",
+            return res.status(200).json({
+                message: "Logged out successfully. Please remove the token from client storage."
             });
-            return res.status(200).json({ message: "Logged out successfully" });
         }
         catch (error) {
             console.error("Logout error:", error);
@@ -71,9 +74,13 @@ class AuthController {
                     password: hashedPassword,
                 },
             });
+            const { password: _, ...userWithoutPassword } = newUser;
             return res
                 .status(201)
-                .json({ message: "User registered successfully", user: newUser });
+                .json({
+                message: "User registered successfully",
+                user: userWithoutPassword
+            });
         }
         catch (error) {
             console.error(error);

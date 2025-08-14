@@ -13,61 +13,67 @@ export class AnalyticsRouter {
   }
 
   private initializeRoutes() {
-    // Apply auth middleware to all routes
+    // All routes require authentication
     this.router.use(authMiddleware);
 
-    // Overall statistics - GET /api/analytics/stats
+    // Dashboard overview stats
     this.router.get(
-      "/stats",
-      this.analyticsController.getOverallStats.bind(this.analyticsController)
+      "/dashboard",
+      this.analyticsController.getDashboardStats.bind(this.analyticsController)
     );
 
-    // Applications by position - GET /api/analytics/positions
+    // Applications breakdowns
     this.router.get(
-      "/positions",
+      "/applications/status",
+      this.analyticsController.getApplicationsByStatus.bind(this.analyticsController)
+    );
+
+    this.router.get(
+      "/applications/position",
       this.analyticsController.getApplicationsByPosition.bind(this.analyticsController)
     );
 
-    // Applications by province - GET /api/analytics/provinces
     this.router.get(
-      "/provinces",
+      "/applications/province",
       this.analyticsController.getApplicationsByProvince.bind(this.analyticsController)
     );
 
-    // Applications by experience level - GET /api/analytics/experience
     this.router.get(
-      "/experience",
-      this.analyticsController.getApplicationsByExperience.bind(this.analyticsController)
-    );
-
-    // Applications by education level - GET /api/analytics/education
-    this.router.get(
-      "/education",
+      "/applications/education",
       this.analyticsController.getApplicationsByEducation.bind(this.analyticsController)
     );
 
-    // Monthly trends - GET /api/analytics/trends?year=2024
     this.router.get(
-      "/trends",
-      this.analyticsController.getMonthlyTrends.bind(this.analyticsController)
+      "/applications/experience",
+      this.analyticsController.getApplicationsByExperience.bind(this.analyticsController)
     );
 
-    // Recent applications - GET /api/analytics/recent?limit=10
     this.router.get(
-      "/recent",
-      this.analyticsController.getRecentApplications.bind(this.analyticsController)
+      "/applications/marital-status",
+      this.analyticsController.getApplicationsByMaritalStatus.bind(this.analyticsController)
     );
 
-    // Age distribution - GET /api/analytics/age-distribution
     this.router.get(
-      "/age-distribution",
+      "/applications/age-distribution",
       this.analyticsController.getAgeDistribution.bind(this.analyticsController)
     );
 
-    // Dashboard data - GET /api/analytics/dashboard
+    // Trend analysis
     this.router.get(
-      "/dashboard",
-      this.analyticsController.getDashboardData.bind(this.analyticsController)
+      "/applications/trend",
+      this.analyticsController.getApplicationsTrend.bind(this.analyticsController)
+    );
+
+    // Recruiter analytics
+    this.router.get(
+      "/recruiters/department",
+      this.analyticsController.getRecruitersByDepartment.bind(this.analyticsController)
+    );
+
+    // Custom analytics with query parameters
+    this.router.get(
+      "/custom",
+      this.analyticsController.getCustomAnalytics.bind(this.analyticsController)
     );
   }
 

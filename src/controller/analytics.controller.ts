@@ -4,286 +4,220 @@ import { PrismaClient } from "@prisma/client";
 const prisma = new PrismaClient();
 
 export class AnalyticsController {
-  // Get overall recruitment statistics
-  async getOverallStats(req: Request, res: Response) {
+  // Dashboard overview stats
+  async getDashboardStats(req: Request, res: Response) {
     try {
       const [
         totalApplications,
         pendingApplications,
-        inProgressApplications,
+        onProgressApplications,
         completedApplications,
-        totalUsers,
-        totalRecruiters
+        totalRecruiters,
+        recentApplications
       ] = await Promise.all([
         prisma.recruitmentForm.count(),
         prisma.recruitmentForm.count({ where: { status: 'PENDING' } }),
         prisma.recruitmentForm.count({ where: { status: 'ON_PROGRESS' } }),
         prisma.recruitmentForm.count({ where: { status: 'COMPLETED' } }),
-        prisma.user.count(),
-        prisma.recruiterData.count()
+        prisma.recruiterData.count(),
+        prisma.recruitmentForm.count({
+          where: { createdAt: { gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) } }
+        })
       ]);
 
       return res.status(200).json({
-        message: "Overall statistics retrieved successfully",
-        stats: {
-          applications: {
-            total: totalApplications,
-            pending: pendingApplications,
-            inProgress: inProgressApplications,
-            completed: completedApplications
-          },
-          users: totalUsers,
-          recruiters: totalRecruiters
-        }
+        totalApplications,
+        pendingApplications,
+        onProgressApplications,
+        completedApplications,
+        totalRecruiters,
+        recentApplications
       });
     } catch (error) {
-      console.error("Error getting overall stats:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get applications by position
+  // Applications by status breakdown
+  async getApplicationsByStatus(req: Request, res: Response) {
+    try {
+      const statusBreakdown = await prisma.recruitmentForm.groupBy({
+        by: ['status'],
+        _count: { status: true }
+      });
+
+      const formattedData = statusBreakdown.map(item => ({
+        status: item.status,
+        count: item._count.status
+      }));
+
+      return res.status(200).json(formattedData);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // Applications by position
   async getApplicationsByPosition(req: Request, res: Response) {
     try {
-      const positionStats = await prisma.recruitmentForm.groupBy({
+      const positionBreakdown = await prisma.recruitmentForm.groupBy({
         by: ['appliedPosition'],
-        _count: {
-          appliedPosition: true
-        },
-        orderBy: {
-          _count: {
-            appliedPosition: 'desc'
-          }
-        }
+        _count: { appliedPosition: true },
+        orderBy: { _count: { appliedPosition: 'desc' } },
+        take: 10
       });
 
-      const formattedStats = positionStats.map(stat => ({
-        position: stat.appliedPosition,
-        count: stat._count.appliedPosition
+      const formattedData = positionBreakdown.map(item => ({
+        position: item.appliedPosition,
+        count: item._count.appliedPosition
       }));
 
-      return res.status(200).json({
-        message: "Applications by position retrieved successfully",
-        data: formattedStats
-      });
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting applications by position:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get applications by province
+  // Applications by province
   async getApplicationsByProvince(req: Request, res: Response) {
     try {
-      const provinceStats = await prisma.recruitmentForm.groupBy({
+      const provinceBreakdown = await prisma.recruitmentForm.groupBy({
         by: ['province'],
-        _count: {
-          province: true
-        },
-        orderBy: {
-          _count: {
-            province: 'desc'
-          }
-        }
+        _count: { province: true },
+        orderBy: { _count: { province: 'desc' } }
       });
 
-      const formattedStats = provinceStats.map(stat => ({
-        province: stat.province,
-        count: stat._count.province
+      const formattedData = provinceBreakdown.map(item => ({
+        province: item.province,
+        count: item._count.province
       }));
 
-      return res.status(200).json({
-        message: "Applications by province retrieved successfully",
-        data: formattedStats
-      });
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting applications by province:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get applications by experience level
-  async getApplicationsByExperience(req: Request, res: Response) {
-    try {
-      const experienceStats = await prisma.recruitmentForm.groupBy({
-        by: ['experienceLevel'],
-        _count: {
-          experienceLevel: true
-        }
-      });
-
-      const formattedStats = experienceStats.map(stat => ({
-        experienceLevel: stat.experienceLevel,
-        count: stat._count.experienceLevel
-      }));
-
-      return res.status(200).json({
-        message: "Applications by experience level retrieved successfully",
-        data: formattedStats
-      });
-    } catch (error) {
-      console.error("Error getting applications by experience:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
-    }
-  }
-
-  // Get applications by education level
+  // Applications by education level
   async getApplicationsByEducation(req: Request, res: Response) {
     try {
-      const educationStats = await prisma.recruitmentForm.groupBy({
+      const educationBreakdown = await prisma.recruitmentForm.groupBy({
         by: ['education'],
-        _count: {
-          education: true
-        },
-        orderBy: {
-          _count: {
-            education: 'desc'
-          }
-        }
+        _count: { education: true },
+        orderBy: { _count: { education: 'desc' } }
       });
 
-      const formattedStats = educationStats.map(stat => ({
-        education: stat.education,
-        count: stat._count.education
+      const formattedData = educationBreakdown.map(item => ({
+        education: item.education,
+        count: item._count.education
       }));
 
-      return res.status(200).json({
-        message: "Applications by education level retrieved successfully",
-        data: formattedStats
-      });
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting applications by education:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get monthly application trends
-  async getMonthlyTrends(req: Request, res: Response) {
+  // Applications trend over time (last 30 days)
+  async getApplicationsTrend(req: Request, res: Response) {
     try {
-      const { year } = req.query;
-      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const monthlyData = await prisma.recruitmentForm.findMany({
-        where: {
-          createdAt: {
-            gte: new Date(`${targetYear}-01-01`),
-            lt: new Date(`${targetYear + 1}-01-01`)
-          }
-        },
-        select: {
-          createdAt: true,
-          status: true
-        }
+      const applications = await prisma.recruitmentForm.findMany({
+        where: { createdAt: { gte: thirtyDaysAgo } },
+        select: { createdAt: true },
+        orderBy: { createdAt: 'asc' }
       });
 
-      // Group by month
-      const monthlyStats = Array.from({ length: 12 }, (_, index) => {
-        const month = index + 1;
-        const monthData = monthlyData.filter(item => 
-          item.createdAt.getMonth() + 1 === month
-        );
-
-        return {
-          month,
-          monthName: new Date(targetYear, index).toLocaleString('default', { month: 'long' }),
-          total: monthData.length,
-          pending: monthData.filter(item => item.status === 'PENDING').length,
-          inProgress: monthData.filter(item => item.status === 'ON_PROGRESS').length,
-          completed: monthData.filter(item => item.status === 'COMPLETED').length
-        };
+      // Group by date
+      const dateGroups: { [key: string]: number } = {};
+      applications.forEach(app => {
+        const date = app.createdAt.toISOString().split('T')[0];
+        dateGroups[date] = (dateGroups[date] || 0) + 1;
       });
 
-      return res.status(200).json({
-        message: "Monthly trends retrieved successfully",
-        year: targetYear,
-        data: monthlyStats
-      });
+      const formattedData = Object.entries(dateGroups).map(([date, count]) => ({
+        date,
+        count
+      }));
+
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting monthly trends:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get recent applications
-  async getRecentApplications(req: Request, res: Response) {
+  // Experience level breakdown
+  async getApplicationsByExperience(req: Request, res: Response) {
     try {
-      const { limit = 10 } = req.query;
-      const limitNum = parseInt(limit as string);
-
-      const recentApplications = await prisma.recruitmentForm.findMany({
-        take: limitNum,
-        orderBy: {
-          createdAt: 'desc'
-        },
-        select: {
-          id: true,
-          fullName: true,
-          appliedPosition: true,
-          province: true,
-          status: true,
-          createdAt: true
-        }
+      const experienceBreakdown = await prisma.recruitmentForm.groupBy({
+        by: ['experienceLevel'],
+        _count: { experienceLevel: true }
       });
 
-      return res.status(200).json({
-        message: "Recent applications retrieved successfully",
-        data: recentApplications
-      });
+      const formattedData = experienceBreakdown.map(item => ({
+        experienceLevel: item.experienceLevel,
+        count: item._count.experienceLevel
+      }));
+
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting recent applications:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get age distribution
+  // Marital status breakdown
+  async getApplicationsByMaritalStatus(req: Request, res: Response) {
+    try {
+      const maritalBreakdown = await prisma.recruitmentForm.groupBy({
+        by: ['maritalStatus'],
+        _count: { maritalStatus: true }
+      });
+
+      const formattedData = maritalBreakdown.map(item => ({
+        maritalStatus: item.maritalStatus,
+        count: item._count.maritalStatus
+      }));
+
+      return res.status(200).json(formattedData);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
+  }
+
+  // Age distribution analysis
   async getAgeDistribution(req: Request, res: Response) {
     try {
       const applications = await prisma.recruitmentForm.findMany({
-        select: {
-          birthDate: true
-        }
+        select: { birthDate: true }
       });
 
-      const currentDate = new Date();
       const ageGroups = {
         '18-25': 0,
-        '26-30': 0,
-        '31-35': 0,
-        '36-40': 0,
-        '41-45': 0,
-        '45+': 0
+        '26-35': 0,
+        '36-45': 0,
+        '46-55': 0,
+        '55+': 0
       };
 
+      const currentDate = new Date();
       applications.forEach(app => {
-        const age = Math.floor((currentDate.getTime() - app.birthDate.getTime()) / (365.25 * 24 * 60 * 60 * 1000));
+        const age = currentDate.getFullYear() - app.birthDate.getFullYear();
         
         if (age <= 25) ageGroups['18-25']++;
-        else if (age <= 30) ageGroups['26-30']++;
-        else if (age <= 35) ageGroups['31-35']++;
-        else if (age <= 40) ageGroups['36-40']++;
-        else if (age <= 45) ageGroups['41-45']++;
-        else ageGroups['45+']++;
+        else if (age <= 35) ageGroups['26-35']++;
+        else if (age <= 45) ageGroups['36-45']++;
+        else if (age <= 55) ageGroups['46-55']++;
+        else ageGroups['55+']++;
       });
 
       const formattedData = Object.entries(ageGroups).map(([range, count]) => ({
@@ -291,132 +225,86 @@ export class AnalyticsController {
         count
       }));
 
-      return res.status(200).json({
-        message: "Age distribution retrieved successfully",
-        data: formattedData
-      });
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting age distribution:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Get comprehensive dashboard data
-  async getDashboardData(req: Request, res: Response) {
+  // Recruiters by department
+  async getRecruitersByDepartment(req: Request, res: Response) {
     try {
-      const [
-        overallStats,
-        topPositions,
-        topProvinces,
-        monthlyTrends,
-        recentApplications
-      ] = await Promise.all([
-        this.getOverallStatsData(),
-        this.getTopPositionsData(),
-        this.getTopProvincesData(),
-        this.getMonthlyTrendsData(),
-        this.getRecentApplicationsData(5)
-      ]);
+      const departmentBreakdown = await prisma.recruiterData.groupBy({
+        by: ['department'],
+        _count: { department: true },
+        where: { department: { not: null } },
+        orderBy: { _count: { department: 'desc' } }
+      });
 
-      return res.status(200).json({
-        message: "Dashboard data retrieved successfully",
-        dashboard: {
-          stats: overallStats,
-          topPositions,
-          topProvinces,
-          monthlyTrends,
-          recentApplications
-        }
-      });
+      const formattedData = departmentBreakdown.map(item => ({
+        department: item.department,
+        count: item._count.department
+      }));
+
+      return res.status(200).json(formattedData);
     } catch (error) {
-      console.error("Error getting dashboard data:", error);
-      return res.status(500).json({
-        message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
-      });
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
     }
   }
 
-  // Helper methods for dashboard
-  private async getOverallStatsData() {
-    const [total, pending, inProgress, completed] = await Promise.all([
-      prisma.recruitmentForm.count(),
-      prisma.recruitmentForm.count({ where: { status: 'PENDING' } }),
-      prisma.recruitmentForm.count({ where: { status: 'ON_PROGRESS' } }),
-      prisma.recruitmentForm.count({ where: { status: 'COMPLETED' } })
-    ]);
+  // Custom analytics with date range filter
+  async getCustomAnalytics(req: Request, res: Response) {
+    try {
+      const { startDate, endDate, metric } = req.query;
 
-    return { total, pending, inProgress, completed };
-  }
-
-  private async getTopPositionsData() {
-    const positions = await prisma.recruitmentForm.groupBy({
-      by: ['appliedPosition'],
-      _count: { appliedPosition: true },
-      orderBy: { _count: { appliedPosition: 'desc' } },
-      take: 5
-    });
-
-    return positions.map(p => ({
-      position: p.appliedPosition,
-      count: p._count.appliedPosition
-    }));
-  }
-
-  private async getTopProvincesData() {
-    const provinces = await prisma.recruitmentForm.groupBy({
-      by: ['province'],
-      _count: { province: true },
-      orderBy: { _count: { province: 'desc' } },
-      take: 5
-    });
-
-    return provinces.map(p => ({
-      province: p.province,
-      count: p._count.province
-    }));
-  }
-
-  private async getMonthlyTrendsData() {
-    const currentYear = new Date().getFullYear();
-    const monthlyData = await prisma.recruitmentForm.findMany({
-      where: {
-        createdAt: {
-          gte: new Date(`${currentYear}-01-01`),
-          lt: new Date(`${currentYear + 1}-01-01`)
-        }
-      },
-      select: { createdAt: true }
-    });
-
-    return Array.from({ length: 12 }, (_, index) => {
-      const month = index + 1;
-      const count = monthlyData.filter(item => 
-        item.createdAt.getMonth() + 1 === month
-      ).length;
-
-      return {
-        month,
-        monthName: new Date(currentYear, index).toLocaleString('default', { month: 'short' }),
-        count
-      };
-    });
-  }
-
-  private async getRecentApplicationsData(limit: number) {
-    return await prisma.recruitmentForm.findMany({
-      take: limit,
-      orderBy: { createdAt: 'desc' },
-      select: {
-        id: true,
-        fullName: true,
-        appliedPosition: true,
-        status: true,
-        createdAt: true
+      if (!startDate || !endDate || !metric) {
+        return res.status(400).json({ 
+          message: "startDate, endDate, and metric are required" 
+        });
       }
-    });
+
+      const dateFilter = {
+        createdAt: {
+          gte: new Date(startDate as string),
+          lte: new Date(endDate as string)
+        }
+      };
+
+      let result;
+      switch (metric) {
+        case 'applications_by_status':
+          result = await prisma.recruitmentForm.groupBy({
+            by: ['status'],
+            _count: { status: true },
+            where: dateFilter
+          });
+          break;
+        case 'applications_by_position':
+          result = await prisma.recruitmentForm.groupBy({
+            by: ['appliedPosition'],
+            _count: { appliedPosition: true },
+            where: dateFilter,
+            orderBy: { _count: { appliedPosition: 'desc' } }
+          });
+          break;
+        case 'applications_by_province':
+          result = await prisma.recruitmentForm.groupBy({
+            by: ['province'],
+            _count: { province: true },
+            where: dateFilter,
+            orderBy: { _count: { province: 'desc' } }
+          });
+          break;
+        default:
+          return res.status(400).json({ message: "Invalid metric" });
+      }
+
+      return res.status(200).json(result);
+    } catch (error) {
+      console.error(error);
+      return res.status(500).json({ message: "Internal server error" });
+    }
   }
 }

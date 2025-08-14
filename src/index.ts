@@ -22,13 +22,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 // CORS configuration
+// CORS configuration
 app.use(
   cors({
     origin: base_url_fe, // Allow requests from the frontend URL
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"], // Allow Authorization header
+    credentials: true, // Allow credentials (cookies, headers, etc.)
   })
 );
+
 
 // Initialize Routers
 const authRouter = new AuthRouter();

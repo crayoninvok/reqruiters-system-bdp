@@ -24,6 +24,7 @@ app.use((0, cors_1.default)({
     origin: base_url_fe,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH"],
     allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
 }));
 const authRouter = new auth_router_1.AuthRouter();
 const userRouter = new user_router_1.UserRouter();
