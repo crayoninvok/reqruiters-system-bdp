@@ -216,6 +216,8 @@ class RecruitmentFormController {
             const province = req.query.province;
             const education = req.query.education;
             const position = req.query.appliedPosition;
+            const startDate = req.query.startDate;
+            const endDate = req.query.endDate;
             const skip = (page - 1) * limit;
             const whereClause = {};
             if (search) {
@@ -224,6 +226,18 @@ class RecruitmentFormController {
                     { whatsappNumber: { contains: search } },
                     { address: { contains: search, mode: "insensitive" } },
                 ];
+            }
+            if (startDate) {
+                whereClause.createdAt = {
+                    ...whereClause.createdAt,
+                    gte: new Date(startDate),
+                };
+            }
+            if (endDate) {
+                whereClause.createdAt = {
+                    ...whereClause.createdAt,
+                    lte: new Date(endDate),
+                };
             }
             if (position && Object.values(client_1.Position).includes(position)) {
                 whereClause.appliedPosition = position;

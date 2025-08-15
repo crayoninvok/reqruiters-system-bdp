@@ -300,7 +300,8 @@ export class RecruitmentFormController {
       const province = req.query.province as string;
       const education = req.query.education as string;
       const position = req.query.appliedPosition as string;
-
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
       const skip = (page - 1) * limit;
 
       // Build where clause for filtering
@@ -312,6 +313,19 @@ export class RecruitmentFormController {
           { whatsappNumber: { contains: search } },
           { address: { contains: search, mode: "insensitive" } },
         ];
+      }
+      if (startDate) {
+        whereClause.createdAt = {
+          ...whereClause.createdAt,
+          gte: new Date(startDate),
+        };
+      }
+
+      if (endDate) {
+        whereClause.createdAt = {
+          ...whereClause.createdAt,
+          lte: new Date(endDate),
+        };
       }
       if (position && Object.values(Position).includes(position as Position)) {
         whereClause.appliedPosition = position;

@@ -16,7 +16,8 @@ export class RecruitmentFormRouter {
   private initializeRoutes() {
     // Create recruitment form with file uploads
     this.router.post(
-      "/", authMiddleware,
+      "/",
+      authMiddleware,
       upload.fields([
         { name: "documentPhoto", maxCount: 1 },
         { name: "documentCv", maxCount: 1 },
