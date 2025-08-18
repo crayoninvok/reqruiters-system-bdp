@@ -194,8 +194,16 @@ enum PantsSize {
 
 enum Certificate {
   AHLI_K3
+  SIM_A
+  SIM_B_I
+  SIM_B_II
+  SIM_C
+  SIM_D
   OPERATOR_FORKLIFT
+  OPERATOR_CRANE
+  OPERATOR_FUEL_TRUCK
   SERTIFIKAT_VAKSIN
+  SERTIFIKAT_LAINNYA
   NONE
 }
 
@@ -205,6 +213,7 @@ enum EducationLevel {
   SMA
   SMK
   D3
+  D4
   S1
   S2
   S3
