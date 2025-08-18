@@ -278,5 +278,146 @@ class PublicRecruitmentController {
             });
         }
     }
+    async generateUploadSignature(req, res) {
+        try {
+            const { fieldName } = req.body;
+            const allowedFields = [
+                'documentPhoto', 'documentCv', 'documentKtp',
+                'documentSkck', 'documentVaccine', 'supportingDocs'
+            ];
+            if (!allowedFields.includes(fieldName)) {
+                return res.status(400).json({
+                    message: 'Invalid field name',
+                    error: 'INVALID_FIELD'
+                });
+            }
+            const folder = fieldName === 'documentPhoto' ? 'rec_avatar' : 'rec_docs';
+            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const publicId = `${fieldName}-${uniqueSuffix}`;
+            const timestamp = Math.round(new Date().getTime() / 1000);
+            const uploadParams = {
+                timestamp: timestamp,
+                folder: folder,
+                public_id: publicId,
+                upload_preset: undefined,
+            };
+            const paramsToSign = {
+                timestamp: timestamp,
+                folder: folder,
+                public_id: publicId
+            };
+            if (!process.env.CLOUDINARY_API_SECRET) {
+                throw new Error('CLOUDINARY_API_SECRET not configured');
+            }
+            const signature = cludinary_1.cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
+            return res.status(200).json({
+                signature,
+                timestamp,
+                api_key: process.env.CLOUDINARY_API_KEY,
+                folder,
+                public_id: publicId,
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME
+            });
+        }
+        catch (error) {
+            console.error('Error generating upload signature:', error);
+            return res.status(500).json({
+                message: 'Internal server error',
+                error: 'INTERNAL_SERVER_ERROR'
+            });
+        }
+    }
+    async submitWithUrls(req, res) {
+        try {
+            const { fullName, birthPlace, birthDate, province, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl } = req.body;
+            if (!fullName ||
+                !birthPlace ||
+                !birthDate ||
+                !province ||
+                !heightCm ||
+                !weightKg ||
+                !shirtSize ||
+                !safetyShoesSize ||
+                !pantsSize ||
+                !address ||
+                !whatsappNumber ||
+                !education ||
+                !schoolName ||
+                !maritalStatus ||
+                !appliedPosition ||
+                !experienceLevel) {
+                return res.status(400).json({
+                    message: "All required fields must be provided",
+                    error: "MISSING_REQUIRED_FIELDS"
+                });
+            }
+            let certificateArray = [];
+            if (certificate) {
+                if (Array.isArray(certificate)) {
+                    certificateArray = certificate;
+                }
+                else {
+                    certificateArray = [certificate];
+                }
+            }
+            const height = parseInt(heightCm);
+            const weight = parseInt(weightKg);
+            if (isNaN(height) || height < 100 || height > 250) {
+                return res.status(400).json({
+                    message: "Height must be between 100-250 cm",
+                    error: "INVALID_HEIGHT"
+                });
+            }
+            if (isNaN(weight) || weight < 30 || weight > 200) {
+                return res.status(400).json({
+                    message: "Weight must be between 30-200 kg",
+                    error: "INVALID_WEIGHT"
+                });
+            }
+            const newRecruitmentForm = await prisma.recruitmentForm.create({
+                data: {
+                    fullName: fullName.trim(),
+                    birthPlace: birthPlace.trim(),
+                    birthDate: new Date(birthDate),
+                    province,
+                    heightCm: height,
+                    weightKg: weight,
+                    shirtSize,
+                    safetyShoesSize,
+                    pantsSize,
+                    address: address.trim(),
+                    whatsappNumber: whatsappNumber.replace(/\s+/g, ''),
+                    certificate: certificateArray,
+                    education,
+                    schoolName: schoolName.trim(),
+                    workExperience: workExperience?.trim(),
+                    maritalStatus,
+                    status: client_1.RecruitmentStatus.PENDING,
+                    appliedPosition,
+                    experienceLevel,
+                    documentPhotoUrl,
+                    documentCvUrl,
+                    documentKtpUrl,
+                    documentSkckUrl,
+                    documentVaccineUrl,
+                    supportingDocsUrl,
+                },
+            });
+            return res.status(201).json({
+                message: "Recruitment form submitted successfully!",
+                success: true,
+                applicationId: newRecruitmentForm.id,
+                submittedAt: newRecruitmentForm.createdAt,
+            });
+        }
+        catch (error) {
+            console.error("Error submitting recruitment form:", error);
+            return res.status(500).json({
+                message: "Internal server error",
+                error: "INTERNAL_SERVER_ERROR",
+                success: false
+            });
+        }
+    }
 }
 exports.PublicRecruitmentController = PublicRecruitmentController;

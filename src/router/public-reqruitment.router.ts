@@ -15,11 +15,17 @@ export class PublicRecruitmentRouter {
   private initializeRoutes() {
     // Add explicit CORS handling for the submit endpoint
     this.router.options("/submit", (req, res) => {
-      console.log('OPTIONS request for /submit received');
-      res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.header('Access-Control-Allow-Methods', 'POST, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+      console.log("OPTIONS request for /submit received");
+      res.header(
+        "Access-Control-Allow-Origin",
+        process.env.BASE_URL_FE || "https://bdphrdatabase.vercel.app"
+      );
+      res.header("Access-Control-Allow-Credentials", "true");
+      res.header("Access-Control-Allow-Methods", "POST, OPTIONS");
+      res.header(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, X-Requested-With, Accept, Origin"
+      );
       res.sendStatus(200);
     });
 
@@ -28,9 +34,15 @@ export class PublicRecruitmentRouter {
       "/submit",
       // Add CORS headers before multer middleware
       (req, res, next) => {
-        console.log('POST request for /submit received from:', req.headers.origin);
-        res.header('Access-Control-Allow-Origin', process.env.BASE_URL_FE || 'https://bdphrdatabase.vercel.app');
-        res.header('Access-Control-Allow-Credentials', 'true');
+        console.log(
+          "POST request for /submit received from:",
+          req.headers.origin
+        );
+        res.header(
+          "Access-Control-Allow-Origin",
+          process.env.BASE_URL_FE || "https://bdphrdatabase.vercel.app"
+        );
+        res.header("Access-Control-Allow-Credentials", "true");
         next();
       },
       // Then apply multer middleware
@@ -60,6 +72,20 @@ export class PublicRecruitmentRouter {
     this.router.get(
       "/status/:id",
       this.publicRecruitmentController.checkApplicationStatus.bind(
+        this.publicRecruitmentController
+      )
+    );
+    this.router.post(
+      "/upload-signature",
+      this.publicRecruitmentController.generateUploadSignature.bind(
+        this.publicRecruitmentController
+      )
+    );
+
+    // NEW ROUTE 2: Submit form with URLs (no file upload)
+    this.router.post(
+      "/submit-with-urls",
+      this.publicRecruitmentController.submitWithUrls.bind(
         this.publicRecruitmentController
       )
     );

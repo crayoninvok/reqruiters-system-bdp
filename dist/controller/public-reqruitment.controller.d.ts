@@ -10,5 +10,7 @@ export declare class PublicRecruitmentController {
     submitRecruitmentForm(req: PublicRequest, res: Response): Promise<Response<any, Record<string, any>>>;
     getFormOptions(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     checkApplicationStatus(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    generateUploadSignature(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    submitWithUrls(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 }
 export {};
