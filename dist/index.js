@@ -15,6 +15,7 @@ const reqruitment_router_1 = require("./router/reqruitment.router");
 const public_reqruitment_router_1 = require("./router/public-reqruitment.router");
 const analytics_router_1 = require("./router/analytics.router");
 const auth_middleware_1 = require("./middleware/auth.middleware");
+const actualvsplan_router_1 = require("./router/actualvsplan.router");
 const PORT = 8000;
 const base_url_fe = process.env.BASE_URL_FE;
 const app = (0, express_1.default)();
@@ -34,6 +35,7 @@ app.use("/api/user", auth_middleware_1.authMiddleware, userRouter.getRouter());
 app.use("/api/recruitment", auth_middleware_1.authMiddleware, recruitmentFormRouter.getRouter());
 app.use("/api/public-recruitment", new public_reqruitment_router_1.PublicRecruitmentRouter().getRouter());
 app.use("/api/analytics", auth_middleware_1.authMiddleware, new analytics_router_1.AnalyticsRouter().getRouter());
+app.use("/api/actual-vs-plan", new actualvsplan_router_1.ActualVsPlanRouter().getRouter());
 app.get("/api", (req, res) => {
     res.send("Welcome to the API!");
 });

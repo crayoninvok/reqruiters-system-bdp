@@ -10,6 +10,8 @@ import { RecruitmentFormRouter } from "./router/reqruitment.router";
 import { PublicRecruitmentRouter } from "./router/public-reqruitment.router";
 import { AnalyticsRouter } from "./router/analytics.router";
 import { authMiddleware } from "./middleware/auth.middleware"; // Importing authMiddleware
+import { ActualVsPlanRouter } from "./router/actualvsplan.router";
+
 
 const PORT: number = 8000;
 const base_url_fe = process.env.BASE_URL_FE; // Frontend URL from environment
@@ -43,6 +45,8 @@ app.use("/api/user", authMiddleware, userRouter.getRouter()); // User routes (Pr
 app.use("/api/recruitment", authMiddleware, recruitmentFormRouter.getRouter()); // Recruitment routes (Protected)
 app.use("/api/public-recruitment", new PublicRecruitmentRouter().getRouter()); // Public recruitment routes
 app.use("/api/analytics", authMiddleware, new AnalyticsRouter().getRouter()); // Analytics routes (Protected)
+app.use("/api/actual-vs-plan", new ActualVsPlanRouter().getRouter());
+
 
 // Base route
 app.get("/api", (req, res) => {
