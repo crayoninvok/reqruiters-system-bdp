@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "public"."Certificate" ADD VALUE 'PENGAWAS_OPERASIONAL_UTAMA';

@@ -300,6 +300,7 @@ export class RecruitmentFormController {
       const province = req.query.province as string;
       const education = req.query.education as string;
       const position = req.query.appliedPosition as string;
+      const certificate = req.query.certificate as string;
       const startDate = req.query.startDate as string;
       const endDate = req.query.endDate as string;
       const skip = (page - 1) * limit;
@@ -329,6 +330,23 @@ export class RecruitmentFormController {
       }
       if (position && Object.values(Position).includes(position as Position)) {
         whereClause.appliedPosition = position;
+      }
+      if (certificate) {
+        // Handle both single certificate and multiple certificates (comma-separated)
+        const certificateArray = certificate
+          .split(",")
+          .filter((cert) => cert.trim());
+
+        // Validate all certificates
+        const validCertificates = certificateArray.filter((cert) =>
+          Object.values(Certificate).includes(cert.trim() as Certificate)
+        );
+
+        if (validCertificates.length > 0) {
+          whereClause.certificate = {
+            hasSome: validCertificates as Certificate[], // Find records that have ANY of these certificates
+          };
+        }
       }
       if (
         status &&

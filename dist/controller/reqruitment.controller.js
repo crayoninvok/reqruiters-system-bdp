@@ -216,6 +216,7 @@ class RecruitmentFormController {
             const province = req.query.province;
             const education = req.query.education;
             const position = req.query.appliedPosition;
+            const certificate = req.query.certificate;
             const startDate = req.query.startDate;
             const endDate = req.query.endDate;
             const skip = (page - 1) * limit;
@@ -241,6 +242,17 @@ class RecruitmentFormController {
             }
             if (position && Object.values(client_1.Position).includes(position)) {
                 whereClause.appliedPosition = position;
+            }
+            if (certificate) {
+                const certificateArray = certificate
+                    .split(",")
+                    .filter((cert) => cert.trim());
+                const validCertificates = certificateArray.filter((cert) => Object.values(client_1.Certificate).includes(cert.trim()));
+                if (validCertificates.length > 0) {
+                    whereClause.certificate = {
+                        hasSome: validCertificates,
+                    };
+                }
             }
             if (status &&
                 Object.values(client_1.RecruitmentStatus).includes(status)) {
