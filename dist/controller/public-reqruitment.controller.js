@@ -39,11 +39,13 @@ class PublicRecruitmentController {
     }
     async submitRecruitmentForm(req, res) {
         try {
-            const { fullName, birthPlace, birthDate, province, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
+            const { fullName, birthPlace, birthDate, gender, province, religion, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
             if (!fullName ||
                 !birthPlace ||
+                !gender ||
                 !birthDate ||
                 !province ||
+                !religion ||
                 !heightCm ||
                 !weightKg ||
                 !shirtSize ||
@@ -58,55 +60,67 @@ class PublicRecruitmentController {
                 !experienceLevel) {
                 return res.status(400).json({
                     message: "All required fields must be provided",
-                    error: "MISSING_REQUIRED_FIELDS"
+                    error: "MISSING_REQUIRED_FIELDS",
                 });
             }
             if (!Object.values(client_1.Province).includes(province)) {
                 return res.status(400).json({
                     message: "Invalid province",
-                    error: "INVALID_PROVINCE"
+                    error: "INVALID_PROVINCE",
+                });
+            }
+            if (!Object.values(client_1.Gender).includes(gender)) {
+                return res.status(400).json({
+                    message: "Invalid gender",
+                    error: "INVALID_GENDER",
+                });
+            }
+            if (!Object.values(client_1.Religion).includes(religion)) {
+                return res.status(400).json({
+                    message: "Invalid religion",
+                    error: "INVALID_RELIGION",
                 });
             }
             if (!Object.values(client_1.ShirtSize).includes(shirtSize)) {
                 return res.status(400).json({
                     message: "Invalid shirt size",
-                    error: "INVALID_SHIRT_SIZE"
+                    error: "INVALID_SHIRT_SIZE",
                 });
             }
             if (!Object.values(client_1.SafetyShoesSize).includes(safetyShoesSize)) {
                 return res.status(400).json({
                     message: "Invalid safety shoes size",
-                    error: "INVALID_SAFETY_SHOES_SIZE"
+                    error: "INVALID_SAFETY_SHOES_SIZE",
                 });
             }
             if (!Object.values(client_1.PantsSize).includes(pantsSize)) {
                 return res.status(400).json({
                     message: "Invalid pants size",
-                    error: "INVALID_PANTS_SIZE"
+                    error: "INVALID_PANTS_SIZE",
                 });
             }
             if (!Object.values(client_1.EducationLevel).includes(education)) {
                 return res.status(400).json({
                     message: "Invalid education level",
-                    error: "INVALID_EDUCATION_LEVEL"
+                    error: "INVALID_EDUCATION_LEVEL",
                 });
             }
             if (!Object.values(client_1.MaritalStatus).includes(maritalStatus)) {
                 return res.status(400).json({
                     message: "Invalid marital status",
-                    error: "INVALID_MARITAL_STATUS"
+                    error: "INVALID_MARITAL_STATUS",
                 });
             }
             if (!Object.values(client_1.Position).includes(appliedPosition)) {
                 return res.status(400).json({
                     message: "Invalid applied position",
-                    error: "INVALID_APPLIED_POSITION"
+                    error: "INVALID_APPLIED_POSITION",
                 });
             }
             if (!Object.values(client_1.ExperienceLevel).includes(experienceLevel)) {
                 return res.status(400).json({
                     message: "Invalid experience level",
-                    error: "INVALID_EXPERIENCE_LEVEL"
+                    error: "INVALID_EXPERIENCE_LEVEL",
                 });
             }
             let certificateArray = [];
@@ -121,7 +135,7 @@ class PublicRecruitmentController {
                     if (!Object.values(client_1.Certificate).includes(cert)) {
                         return res.status(400).json({
                             message: `Invalid certificate: ${cert}`,
-                            error: "INVALID_CERTIFICATE"
+                            error: "INVALID_CERTIFICATE",
                         });
                     }
                 }
@@ -131,20 +145,20 @@ class PublicRecruitmentController {
             if (isNaN(height) || height < 100 || height > 250) {
                 return res.status(400).json({
                     message: "Height must be between 100-250 cm",
-                    error: "INVALID_HEIGHT"
+                    error: "INVALID_HEIGHT",
                 });
             }
             if (isNaN(weight) || weight < 30 || weight > 200) {
                 return res.status(400).json({
                     message: "Weight must be between 30-200 kg",
-                    error: "INVALID_WEIGHT"
+                    error: "INVALID_WEIGHT",
                 });
             }
             const whatsappRegex = /^(\+62|62|0)[0-9]{8,13}$/;
-            if (!whatsappRegex.test(whatsappNumber.replace(/\s+/g, ''))) {
+            if (!whatsappRegex.test(whatsappNumber.replace(/\s+/g, ""))) {
                 return res.status(400).json({
                     message: "Invalid WhatsApp number format",
-                    error: "INVALID_WHATSAPP_NUMBER"
+                    error: "INVALID_WHATSAPP_NUMBER",
                 });
             }
             const files = req.files;
@@ -168,6 +182,8 @@ class PublicRecruitmentController {
                     fullName: fullName.trim(),
                     birthPlace: birthPlace.trim(),
                     birthDate: new Date(birthDate),
+                    gender,
+                    religion,
                     province,
                     heightCm: height,
                     weightKg: weight,
@@ -175,10 +191,11 @@ class PublicRecruitmentController {
                     safetyShoesSize,
                     pantsSize,
                     address: address.trim(),
-                    whatsappNumber: whatsappNumber.replace(/\s+/g, ''),
+                    whatsappNumber: whatsappNumber.replace(/\s+/g, ""),
                     certificate: certificateArray,
                     education,
                     schoolName: schoolName.trim(),
+                    jurusan: jurusan?.trim(),
                     workExperience: workExperience?.trim(),
                     maritalStatus,
                     status: client_1.RecruitmentStatus.PENDING,
@@ -203,7 +220,7 @@ class PublicRecruitmentController {
             return res.status(500).json({
                 message: "Internal server error. Please try again later.",
                 error: "INTERNAL_SERVER_ERROR",
-                success: false
+                success: false,
             });
         }
     }
@@ -212,7 +229,9 @@ class PublicRecruitmentController {
             return res.status(200).json({
                 message: "Form options retrieved successfully",
                 options: {
-                    provinces: Object.values(client_1.Province),
+                    province: Object.values(client_1.Province),
+                    gender: Object.values(client_1.Gender),
+                    religion: Object.values(client_1.Religion),
                     shirtSizes: Object.values(client_1.ShirtSize),
                     safetyShoeSizes: Object.values(client_1.SafetyShoesSize),
                     pantsSizes: Object.values(client_1.PantsSize),
@@ -228,7 +247,7 @@ class PublicRecruitmentController {
             console.error("Error getting form options:", error);
             return res.status(500).json({
                 message: "Internal server error",
-                error: "INTERNAL_SERVER_ERROR"
+                error: "INTERNAL_SERVER_ERROR",
             });
         }
     }
@@ -238,7 +257,7 @@ class PublicRecruitmentController {
             if (!id) {
                 return res.status(400).json({
                     message: "Application ID is required",
-                    error: "MISSING_APPLICATION_ID"
+                    error: "MISSING_APPLICATION_ID",
                 });
             }
             const application = await prisma.recruitmentForm.findUnique({
@@ -255,7 +274,7 @@ class PublicRecruitmentController {
             if (!application) {
                 return res.status(404).json({
                     message: "Application not found",
-                    error: "APPLICATION_NOT_FOUND"
+                    error: "APPLICATION_NOT_FOUND",
                 });
             }
             return res.status(200).json({
@@ -274,7 +293,7 @@ class PublicRecruitmentController {
             console.error("Error checking application status:", error);
             return res.status(500).json({
                 message: "Internal server error",
-                error: "INTERNAL_SERVER_ERROR"
+                error: "INTERNAL_SERVER_ERROR",
             });
         }
     }
@@ -282,17 +301,21 @@ class PublicRecruitmentController {
         try {
             const { fieldName } = req.body;
             const allowedFields = [
-                'documentPhoto', 'documentCv', 'documentKtp',
-                'documentSkck', 'documentVaccine', 'supportingDocs'
+                "documentPhoto",
+                "documentCv",
+                "documentKtp",
+                "documentSkck",
+                "documentVaccine",
+                "supportingDocs",
             ];
             if (!allowedFields.includes(fieldName)) {
                 return res.status(400).json({
-                    message: 'Invalid field name',
-                    error: 'INVALID_FIELD'
+                    message: "Invalid field name",
+                    error: "INVALID_FIELD",
                 });
             }
-            const folder = fieldName === 'documentPhoto' ? 'rec_avatar' : 'rec_docs';
-            const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+            const folder = fieldName === "documentPhoto" ? "rec_avatar" : "rec_docs";
+            const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
             const publicId = `${fieldName}-${uniqueSuffix}`;
             const timestamp = Math.round(new Date().getTime() / 1000);
             const uploadParams = {
@@ -304,10 +327,10 @@ class PublicRecruitmentController {
             const paramsToSign = {
                 timestamp: timestamp,
                 folder: folder,
-                public_id: publicId
+                public_id: publicId,
             };
             if (!process.env.CLOUDINARY_API_SECRET) {
-                throw new Error('CLOUDINARY_API_SECRET not configured');
+                throw new Error("CLOUDINARY_API_SECRET not configured");
             }
             const signature = cludinary_1.cloudinary.utils.api_sign_request(paramsToSign, process.env.CLOUDINARY_API_SECRET);
             return res.status(200).json({
@@ -316,23 +339,25 @@ class PublicRecruitmentController {
                 api_key: process.env.CLOUDINARY_API_KEY,
                 folder,
                 public_id: publicId,
-                cloud_name: process.env.CLOUDINARY_CLOUD_NAME
+                cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
             });
         }
         catch (error) {
-            console.error('Error generating upload signature:', error);
+            console.error("Error generating upload signature:", error);
             return res.status(500).json({
-                message: 'Internal server error',
-                error: 'INTERNAL_SERVER_ERROR'
+                message: "Internal server error",
+                error: "INTERNAL_SERVER_ERROR",
             });
         }
     }
     async submitWithUrls(req, res) {
         try {
-            const { fullName, birthPlace, birthDate, province, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl } = req.body;
+            const { fullName, birthPlace, birthDate, province, religion, heightCm, weightKg, gender, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl, } = req.body;
             if (!fullName ||
                 !birthPlace ||
                 !birthDate ||
+                !gender ||
+                !religion ||
                 !province ||
                 !heightCm ||
                 !weightKg ||
@@ -348,7 +373,7 @@ class PublicRecruitmentController {
                 !experienceLevel) {
                 return res.status(400).json({
                     message: "All required fields must be provided",
-                    error: "MISSING_REQUIRED_FIELDS"
+                    error: "MISSING_REQUIRED_FIELDS",
                 });
             }
             let certificateArray = [];
@@ -365,13 +390,13 @@ class PublicRecruitmentController {
             if (isNaN(height) || height < 100 || height > 250) {
                 return res.status(400).json({
                     message: "Height must be between 100-250 cm",
-                    error: "INVALID_HEIGHT"
+                    error: "INVALID_HEIGHT",
                 });
             }
             if (isNaN(weight) || weight < 30 || weight > 200) {
                 return res.status(400).json({
                     message: "Weight must be between 30-200 kg",
-                    error: "INVALID_WEIGHT"
+                    error: "INVALID_WEIGHT",
                 });
             }
             const newRecruitmentForm = await prisma.recruitmentForm.create({
@@ -380,16 +405,19 @@ class PublicRecruitmentController {
                     birthPlace: birthPlace.trim(),
                     birthDate: new Date(birthDate),
                     province,
+                    gender,
+                    religion,
                     heightCm: height,
                     weightKg: weight,
                     shirtSize,
                     safetyShoesSize,
                     pantsSize,
                     address: address.trim(),
-                    whatsappNumber: whatsappNumber.replace(/\s+/g, ''),
+                    whatsappNumber: whatsappNumber.replace(/\s+/g, ""),
                     certificate: certificateArray,
                     education,
                     schoolName: schoolName.trim(),
+                    jurusan: jurusan?.trim(),
                     workExperience: workExperience?.trim(),
                     maritalStatus,
                     status: client_1.RecruitmentStatus.PENDING,
@@ -415,7 +443,7 @@ class PublicRecruitmentController {
             return res.status(500).json({
                 message: "Internal server error",
                 error: "INTERNAL_SERVER_ERROR",
-                success: false
+                success: false,
             });
         }
     }

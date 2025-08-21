@@ -29,6 +29,8 @@ model RecruitmentForm {
   fullName           String
   birthPlace         String
   birthDate          DateTime
+  gender             Gender @default(MALE)
+  religion           Religion @default(ISLAM)
   province           Province
   heightCm           Int
   weightKg           Int
@@ -40,6 +42,7 @@ model RecruitmentForm {
   certificate        Certificate[]
   education          EducationLevel
   schoolName         String
+  jurusan             String?
   workExperience     String?
   maritalStatus      MaritalStatus
   appliedPosition    Position?          // New field for job position
@@ -98,6 +101,7 @@ model HiredEmployee {
   probationEndDate      DateTime?         // End of probation period
   employmentStatus      EmploymentStatus  @default(PROBATION)
   contractType          ContractType      @default(PERMANENT)
+
   
   // Salary and benefits
   basicSalary           Decimal?          @db.Decimal(15,2)
@@ -290,6 +294,20 @@ enum PantsSize {
   SIZE_34
   SIZE_35
   SIZE_36
+}
+
+enum Gender{
+  MALE
+  FEMALE
+}
+
+enum Religion{
+  ISLAM
+  PROTESTAN
+  KATHOLIK
+  HINDU
+  BUDDHA
+  KONGHUCU
 }
 
 enum Certificate {

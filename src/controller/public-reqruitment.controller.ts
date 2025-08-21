@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import {
   PrismaClient,
   Province,
+  Gender,
+  Religion,
   ShirtSize,
   SafetyShoesSize,
   PantsSize,
@@ -69,7 +71,9 @@ export class PublicRecruitmentController {
         fullName,
         birthPlace,
         birthDate,
+        gender,
         province,
+        religion,
         heightCm,
         weightKg,
         shirtSize,
@@ -80,6 +84,7 @@ export class PublicRecruitmentController {
         certificate,
         education,
         schoolName,
+        jurusan,
         workExperience,
         maritalStatus,
         appliedPosition,
@@ -90,8 +95,10 @@ export class PublicRecruitmentController {
       if (
         !fullName ||
         !birthPlace ||
+        !gender ||
         !birthDate ||
         !province ||
+        !religion ||
         !heightCm ||
         !weightKg ||
         !shirtSize ||
@@ -101,63 +108,76 @@ export class PublicRecruitmentController {
         !whatsappNumber ||
         !education ||
         !schoolName ||
+
         !maritalStatus ||
         !appliedPosition ||
         !experienceLevel
       ) {
         return res.status(400).json({
           message: "All required fields must be provided",
-          error: "MISSING_REQUIRED_FIELDS"
+          error: "MISSING_REQUIRED_FIELDS",
         });
       }
 
       // Validate enum fields
       if (!Object.values(Province).includes(province)) {
-        return res.status(400).json({ 
-          message: "Invalid province", 
-          error: "INVALID_PROVINCE" 
+        return res.status(400).json({
+          message: "Invalid province",
+          error: "INVALID_PROVINCE",
+        });
+      }
+      if (!Object.values(Gender).includes(gender)) {
+        return res.status(400).json({
+          message: "Invalid gender",
+          error: "INVALID_GENDER",
+        });
+      }
+      if (!Object.values(Religion).includes(religion)) {
+        return res.status(400).json({
+          message: "Invalid religion",
+          error: "INVALID_RELIGION",
         });
       }
       if (!Object.values(ShirtSize).includes(shirtSize)) {
-        return res.status(400).json({ 
-          message: "Invalid shirt size", 
-          error: "INVALID_SHIRT_SIZE" 
+        return res.status(400).json({
+          message: "Invalid shirt size",
+          error: "INVALID_SHIRT_SIZE",
         });
       }
       if (!Object.values(SafetyShoesSize).includes(safetyShoesSize)) {
-        return res.status(400).json({ 
-          message: "Invalid safety shoes size", 
-          error: "INVALID_SAFETY_SHOES_SIZE" 
+        return res.status(400).json({
+          message: "Invalid safety shoes size",
+          error: "INVALID_SAFETY_SHOES_SIZE",
         });
       }
       if (!Object.values(PantsSize).includes(pantsSize)) {
-        return res.status(400).json({ 
-          message: "Invalid pants size", 
-          error: "INVALID_PANTS_SIZE" 
+        return res.status(400).json({
+          message: "Invalid pants size",
+          error: "INVALID_PANTS_SIZE",
         });
       }
       if (!Object.values(EducationLevel).includes(education)) {
-        return res.status(400).json({ 
-          message: "Invalid education level", 
-          error: "INVALID_EDUCATION_LEVEL" 
+        return res.status(400).json({
+          message: "Invalid education level",
+          error: "INVALID_EDUCATION_LEVEL",
         });
       }
       if (!Object.values(MaritalStatus).includes(maritalStatus)) {
-        return res.status(400).json({ 
-          message: "Invalid marital status", 
-          error: "INVALID_MARITAL_STATUS" 
+        return res.status(400).json({
+          message: "Invalid marital status",
+          error: "INVALID_MARITAL_STATUS",
         });
       }
       if (!Object.values(Position).includes(appliedPosition)) {
-        return res.status(400).json({ 
-          message: "Invalid applied position", 
-          error: "INVALID_APPLIED_POSITION" 
+        return res.status(400).json({
+          message: "Invalid applied position",
+          error: "INVALID_APPLIED_POSITION",
         });
       }
       if (!Object.values(ExperienceLevel).includes(experienceLevel)) {
-        return res.status(400).json({ 
-          message: "Invalid experience level", 
-          error: "INVALID_EXPERIENCE_LEVEL" 
+        return res.status(400).json({
+          message: "Invalid experience level",
+          error: "INVALID_EXPERIENCE_LEVEL",
         });
       }
 
@@ -172,9 +192,9 @@ export class PublicRecruitmentController {
 
         for (const cert of certificateArray) {
           if (!Object.values(Certificate).includes(cert)) {
-            return res.status(400).json({ 
-              message: `Invalid certificate: ${cert}`, 
-              error: "INVALID_CERTIFICATE" 
+            return res.status(400).json({
+              message: `Invalid certificate: ${cert}`,
+              error: "INVALID_CERTIFICATE",
             });
           }
         }
@@ -186,22 +206,22 @@ export class PublicRecruitmentController {
       if (isNaN(height) || height < 100 || height > 250) {
         return res.status(400).json({
           message: "Height must be between 100-250 cm",
-          error: "INVALID_HEIGHT"
+          error: "INVALID_HEIGHT",
         });
       }
       if (isNaN(weight) || weight < 30 || weight > 200) {
         return res.status(400).json({
           message: "Weight must be between 30-200 kg",
-          error: "INVALID_WEIGHT"
+          error: "INVALID_WEIGHT",
         });
       }
 
       // Validate WhatsApp number format (basic validation)
       const whatsappRegex = /^(\+62|62|0)[0-9]{8,13}$/;
-      if (!whatsappRegex.test(whatsappNumber.replace(/\s+/g, ''))) {
+      if (!whatsappRegex.test(whatsappNumber.replace(/\s+/g, ""))) {
         return res.status(400).json({
           message: "Invalid WhatsApp number format",
-          error: "INVALID_WHATSAPP_NUMBER"
+          error: "INVALID_WHATSAPP_NUMBER",
         });
       }
 
@@ -230,6 +250,8 @@ export class PublicRecruitmentController {
           fullName: fullName.trim(),
           birthPlace: birthPlace.trim(),
           birthDate: new Date(birthDate),
+          gender,
+          religion,
           province,
           heightCm: height,
           weightKg: weight,
@@ -237,10 +259,11 @@ export class PublicRecruitmentController {
           safetyShoesSize,
           pantsSize,
           address: address.trim(),
-          whatsappNumber: whatsappNumber.replace(/\s+/g, ''), // Remove spaces
+          whatsappNumber: whatsappNumber.replace(/\s+/g, ""), // Remove spaces
           certificate: certificateArray,
           education,
           schoolName: schoolName.trim(),
+          jurusan: jurusan?.trim(),
           workExperience: workExperience?.trim(),
           maritalStatus,
           status: RecruitmentStatus.PENDING, // Always set to PENDING for public submissions
@@ -251,7 +274,8 @@ export class PublicRecruitmentController {
       });
 
       return res.status(201).json({
-        message: "Recruitment form submitted successfully! We will review your application and contact you soon.",
+        message:
+          "Recruitment form submitted successfully! We will review your application and contact you soon.",
         success: true,
         applicationId: newRecruitmentForm.id,
         submittedAt: newRecruitmentForm.createdAt,
@@ -261,14 +285,16 @@ export class PublicRecruitmentController {
 
       // Cleanup uploaded files on error
       if (req.files) {
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const files = req.files as {
+          [fieldname: string]: Express.Multer.File[];
+        };
         await this.cleanupFiles(files);
       }
 
       return res.status(500).json({
         message: "Internal server error. Please try again later.",
         error: "INTERNAL_SERVER_ERROR",
-        success: false
+        success: false,
       });
     }
   }
@@ -279,7 +305,9 @@ export class PublicRecruitmentController {
       return res.status(200).json({
         message: "Form options retrieved successfully",
         options: {
-          provinces: Object.values(Province),
+          province: Object.values(Province),
+          gender: Object.values(Gender),
+          religion: Object.values(Religion),
           shirtSizes: Object.values(ShirtSize),
           safetyShoeSizes: Object.values(SafetyShoesSize),
           pantsSizes: Object.values(PantsSize),
@@ -294,7 +322,7 @@ export class PublicRecruitmentController {
       console.error("Error getting form options:", error);
       return res.status(500).json({
         message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
+        error: "INTERNAL_SERVER_ERROR",
       });
     }
   }
@@ -307,7 +335,7 @@ export class PublicRecruitmentController {
       if (!id) {
         return res.status(400).json({
           message: "Application ID is required",
-          error: "MISSING_APPLICATION_ID"
+          error: "MISSING_APPLICATION_ID",
         });
       }
 
@@ -326,7 +354,7 @@ export class PublicRecruitmentController {
       if (!application) {
         return res.status(404).json({
           message: "Application not found",
-          error: "APPLICATION_NOT_FOUND"
+          error: "APPLICATION_NOT_FOUND",
         });
       }
 
@@ -345,209 +373,221 @@ export class PublicRecruitmentController {
       console.error("Error checking application status:", error);
       return res.status(500).json({
         message: "Internal server error",
-        error: "INTERNAL_SERVER_ERROR"
+        error: "INTERNAL_SERVER_ERROR",
       });
     }
   }
   async generateUploadSignature(req: Request, res: Response) {
-  try {
-    const { fieldName } = req.body;
+    try {
+      const { fieldName } = req.body;
 
-    // Validate field name
-    const allowedFields = [
-      'documentPhoto', 'documentCv', 'documentKtp', 
-      'documentSkck', 'documentVaccine', 'supportingDocs'
-    ];
-    
-    if (!allowedFields.includes(fieldName)) {
-      return res.status(400).json({ 
-        message: 'Invalid field name',
-        error: 'INVALID_FIELD'
-      });
-    }
+      // Validate field name
+      const allowedFields = [
+        "documentPhoto",
+        "documentCv",
+        "documentKtp",
+        "documentSkck",
+        "documentVaccine",
+        "supportingDocs",
+      ];
 
-    // Determine folder
-    const folder = fieldName === 'documentPhoto' ? 'rec_avatar' : 'rec_docs';
-
-    // Generate unique public_id
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const publicId = `${fieldName}-${uniqueSuffix}`;
-
-    // Create upload parameters - FIXED: Include all required params
-    const timestamp = Math.round(new Date().getTime() / 1000);
-    const uploadParams = {
-      timestamp: timestamp,
-      folder: folder,
-      public_id: publicId,
-      // Add these missing parameters that Cloudinary requires
-      upload_preset: undefined, // Explicitly undefined since we're using signature
-      // Remove resource_type if not needed, or ensure it's properly included in signature
-    };
-
-    // CRITICAL FIX: Generate signature with exact parameters that will be sent
-    const paramsToSign = {
-      timestamp: timestamp,
-      folder: folder,
-      public_id: publicId
-    };
-
-    // Generate signature - ensure API_SECRET exists
-    if (!process.env.CLOUDINARY_API_SECRET) {
-      throw new Error('CLOUDINARY_API_SECRET not configured');
-    }
-
-    const signature = cloudinary.utils.api_sign_request(
-      paramsToSign,
-      process.env.CLOUDINARY_API_SECRET
-    );
-
-    return res.status(200).json({
-      signature,
-      timestamp,
-      api_key: process.env.CLOUDINARY_API_KEY,
-      folder,
-      public_id: publicId,
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME
-    });
-  } catch (error) {
-    console.error('Error generating upload signature:', error);
-    return res.status(500).json({
-      message: 'Internal server error',
-      error: 'INTERNAL_SERVER_ERROR'
-    });
-  }
-}
-
-// Method 2: Submit form with pre-uploaded URLs (no file upload)
-async submitWithUrls(req: Request, res: Response) {
-  try {
-    const {
-      fullName,
-      birthPlace,
-      birthDate,
-      province,
-      heightCm,
-      weightKg,
-      shirtSize,
-      safetyShoesSize,
-      pantsSize,
-      address,
-      whatsappNumber,
-      certificate,
-      education,
-      schoolName,
-      workExperience,
-      maritalStatus,
-      appliedPosition,
-      experienceLevel = "FRESH_GRADUATED",
-      // File URLs (already uploaded to Cloudinary)
-      documentPhotoUrl,
-      documentCvUrl,
-      documentKtpUrl,
-      documentSkckUrl,
-      documentVaccineUrl,
-      supportingDocsUrl
-    } = req.body;
-
-    // Use the SAME validation logic from your existing submitRecruitmentForm method
-    if (
-      !fullName ||
-      !birthPlace ||
-      !birthDate ||
-      !province ||
-      !heightCm ||
-      !weightKg ||
-      !shirtSize ||
-      !safetyShoesSize ||
-      !pantsSize ||
-      !address ||
-      !whatsappNumber ||
-      !education ||
-      !schoolName ||
-      !maritalStatus ||
-      !appliedPosition ||
-      !experienceLevel
-    ) {
-      return res.status(400).json({
-        message: "All required fields must be provided",
-        error: "MISSING_REQUIRED_FIELDS"
-      });
-    }
-
-    // Copy ALL your validation logic from submitRecruitmentForm here
-    // (Province validation, ShirtSize validation, etc.)
-    
-    // Process certificate array
-    let certificateArray: Certificate[] = [];
-    if (certificate) {
-      if (Array.isArray(certificate)) {
-        certificateArray = certificate;
-      } else {
-        certificateArray = [certificate];
+      if (!allowedFields.includes(fieldName)) {
+        return res.status(400).json({
+          message: "Invalid field name",
+          error: "INVALID_FIELD",
+        });
       }
-    }
 
-    // Validate numeric fields
-    const height = parseInt(heightCm);
-    const weight = parseInt(weightKg);
-    if (isNaN(height) || height < 100 || height > 250) {
-      return res.status(400).json({
-        message: "Height must be between 100-250 cm",
-        error: "INVALID_HEIGHT"
+      // Determine folder
+      const folder = fieldName === "documentPhoto" ? "rec_avatar" : "rec_docs";
+
+      // Generate unique public_id
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const publicId = `${fieldName}-${uniqueSuffix}`;
+
+      // Create upload parameters - FIXED: Include all required params
+      const timestamp = Math.round(new Date().getTime() / 1000);
+      const uploadParams = {
+        timestamp: timestamp,
+        folder: folder,
+        public_id: publicId,
+        // Add these missing parameters that Cloudinary requires
+        upload_preset: undefined, // Explicitly undefined since we're using signature
+        // Remove resource_type if not needed, or ensure it's properly included in signature
+      };
+
+      // CRITICAL FIX: Generate signature with exact parameters that will be sent
+      const paramsToSign = {
+        timestamp: timestamp,
+        folder: folder,
+        public_id: publicId,
+      };
+
+      // Generate signature - ensure API_SECRET exists
+      if (!process.env.CLOUDINARY_API_SECRET) {
+        throw new Error("CLOUDINARY_API_SECRET not configured");
+      }
+
+      const signature = cloudinary.utils.api_sign_request(
+        paramsToSign,
+        process.env.CLOUDINARY_API_SECRET
+      );
+
+      return res.status(200).json({
+        signature,
+        timestamp,
+        api_key: process.env.CLOUDINARY_API_KEY,
+        folder,
+        public_id: publicId,
+        cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+      });
+    } catch (error) {
+      console.error("Error generating upload signature:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: "INTERNAL_SERVER_ERROR",
       });
     }
-    if (isNaN(weight) || weight < 30 || weight > 200) {
-      return res.status(400).json({
-        message: "Weight must be between 30-200 kg",
-        error: "INVALID_WEIGHT"
-      });
-    }
+  }
 
-    // Create recruitment form with provided URLs
-    const newRecruitmentForm = await prisma.recruitmentForm.create({
-      data: {
-        fullName: fullName.trim(),
-        birthPlace: birthPlace.trim(),
-        birthDate: new Date(birthDate),
+  // Method 2: Submit form with pre-uploaded URLs (no file upload)
+  async submitWithUrls(req: Request, res: Response) {
+    try {
+      const {
+        fullName,
+        birthPlace,
+        birthDate,
         province,
-        heightCm: height,
-        weightKg: weight,
+        religion,
+        heightCm,
+        weightKg,
+        gender,
         shirtSize,
         safetyShoesSize,
         pantsSize,
-        address: address.trim(),
-        whatsappNumber: whatsappNumber.replace(/\s+/g, ''),
-        certificate: certificateArray,
+        address,
+        whatsappNumber,
+        certificate,
         education,
-        schoolName: schoolName.trim(),
-        workExperience: workExperience?.trim(),
+        schoolName,
+        jurusan,
+        workExperience,
         maritalStatus,
-        status: RecruitmentStatus.PENDING,
         appliedPosition,
-        experienceLevel,
-        // Use the provided URLs
+        experienceLevel = "FRESH_GRADUATED",
+        // File URLs (already uploaded to Cloudinary)
         documentPhotoUrl,
         documentCvUrl,
         documentKtpUrl,
         documentSkckUrl,
         documentVaccineUrl,
         supportingDocsUrl,
-      },
-    });
+      } = req.body;
 
-    return res.status(201).json({
-      message: "Recruitment form submitted successfully!",
-      success: true,
-      applicationId: newRecruitmentForm.id,
-      submittedAt: newRecruitmentForm.createdAt,
-    });
-  } catch (error: any) {
-    console.error("Error submitting recruitment form:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-      error: "INTERNAL_SERVER_ERROR",
-      success: false
-    });
+      // Use the SAME validation logic from your existing submitRecruitmentForm method
+      if (
+        !fullName ||
+        !birthPlace ||
+        !birthDate ||
+        !gender ||
+        !religion ||
+        !province ||
+        !heightCm ||
+        !weightKg ||
+        !shirtSize ||
+        !safetyShoesSize ||
+        !pantsSize ||
+        !address ||
+        !whatsappNumber ||
+        !education ||
+        !schoolName ||
+        !maritalStatus ||
+        !appliedPosition ||
+        !experienceLevel
+      ) {
+        return res.status(400).json({
+          message: "All required fields must be provided",
+          error: "MISSING_REQUIRED_FIELDS",
+        });
+      }
+
+      // Copy ALL your validation logic from submitRecruitmentForm here
+      // (Province validation, ShirtSize validation, etc.)
+
+      // Process certificate array
+      let certificateArray: Certificate[] = [];
+      if (certificate) {
+        if (Array.isArray(certificate)) {
+          certificateArray = certificate;
+        } else {
+          certificateArray = [certificate];
+        }
+      }
+
+      // Validate numeric fields
+      const height = parseInt(heightCm);
+      const weight = parseInt(weightKg);
+      if (isNaN(height) || height < 100 || height > 250) {
+        return res.status(400).json({
+          message: "Height must be between 100-250 cm",
+          error: "INVALID_HEIGHT",
+        });
+      }
+      if (isNaN(weight) || weight < 30 || weight > 200) {
+        return res.status(400).json({
+          message: "Weight must be between 30-200 kg",
+          error: "INVALID_WEIGHT",
+        });
+      }
+
+      // Create recruitment form with provided URLs
+      const newRecruitmentForm = await prisma.recruitmentForm.create({
+        data: {
+          fullName: fullName.trim(),
+          birthPlace: birthPlace.trim(),
+          birthDate: new Date(birthDate),
+          province,
+          gender,
+          religion,
+          heightCm: height,
+          weightKg: weight,
+          shirtSize,
+          safetyShoesSize,
+          pantsSize,
+          address: address.trim(),
+          whatsappNumber: whatsappNumber.replace(/\s+/g, ""),
+          certificate: certificateArray,
+          education,
+          schoolName: schoolName.trim(),
+          jurusan: jurusan?.trim(),
+          workExperience: workExperience?.trim(),
+          maritalStatus,
+          status: RecruitmentStatus.PENDING,
+          appliedPosition,
+          experienceLevel,
+          // Use the provided URLs
+          documentPhotoUrl,
+          documentCvUrl,
+          documentKtpUrl,
+          documentSkckUrl,
+          documentVaccineUrl,
+          supportingDocsUrl,
+        },
+      });
+
+      return res.status(201).json({
+        message: "Recruitment form submitted successfully!",
+        success: true,
+        applicationId: newRecruitmentForm.id,
+        submittedAt: newRecruitmentForm.createdAt,
+      });
+    } catch (error: any) {
+      console.error("Error submitting recruitment form:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+        error: "INTERNAL_SERVER_ERROR",
+        success: false,
+      });
+    }
   }
-}
 }
