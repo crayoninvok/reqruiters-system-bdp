@@ -22,6 +22,8 @@ class RecruitmentFormRouter {
         ]), this.recruitmentFormController.createRecruitmentForm.bind(this.recruitmentFormController));
         this.router.get("/", auth_middleware_1.authMiddleware, this.recruitmentFormController.getRecruitmentForms.bind(this.recruitmentFormController));
         this.router.get("/stats", auth_middleware_1.authMiddleware, this.recruitmentFormController.getRecruitmentStats.bind(this.recruitmentFormController));
+        this.router.get("/ready-for-hiring", auth_middleware_1.authMiddleware, this.recruitmentFormController.getCandidatesReadyForHiring.bind(this.recruitmentFormController));
+        this.router.post("/migrate-to-hired", auth_middleware_1.authMiddleware, this.recruitmentFormController.migrateToHiredEmployee.bind(this.recruitmentFormController));
         this.router.get("/:id", auth_middleware_1.authMiddleware, this.recruitmentFormController.getRecruitmentFormById.bind(this.recruitmentFormController));
         this.router.put("/:id", auth_middleware_1.authMiddleware, cludinary_1.upload.fields([
             { name: "documentPhoto", maxCount: 1 },

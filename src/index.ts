@@ -11,6 +11,8 @@ import { PublicRecruitmentRouter } from "./router/public-reqruitment.router";
 import { AnalyticsRouter } from "./router/analytics.router";
 import { authMiddleware } from "./middleware/auth.middleware"; // Importing authMiddleware
 import { ActualVsPlanRouter } from "./router/actualvsplan.router";
+import { HiredEmployeeRouter } from "./router/hired.router";
+
 
 
 const PORT: number = 8000;
@@ -46,6 +48,8 @@ app.use("/api/recruitment", authMiddleware, recruitmentFormRouter.getRouter()); 
 app.use("/api/public-recruitment", new PublicRecruitmentRouter().getRouter()); // Public recruitment routes
 app.use("/api/analytics", authMiddleware, new AnalyticsRouter().getRouter()); // Analytics routes (Protected)
 app.use("/api/actual-vs-plan", new ActualVsPlanRouter().getRouter());
+app.use("/api/hired", new HiredEmployeeRouter().getRouter());
+
 
 
 // Base route

@@ -49,6 +49,24 @@ export class RecruitmentFormRouter {
       )
     );
 
+    // NEW: Get candidates ready for hiring (status = HIRED but not migrated) - AUTH REQUIRED
+    this.router.get(
+      "/ready-for-hiring",
+      authMiddleware,
+      this.recruitmentFormController.getCandidatesReadyForHiring.bind(
+        this.recruitmentFormController
+      )
+    );
+
+    // NEW: Migrate HIRED candidate to HiredEmployee table - AUTH REQUIRED
+    this.router.post(
+      "/migrate-to-hired",
+      authMiddleware,
+      this.recruitmentFormController.migrateToHiredEmployee.bind(
+        this.recruitmentFormController
+      )
+    );
+
     // Get single recruitment form by ID - AUTH REQUIRED
     this.router.get(
       "/:id",

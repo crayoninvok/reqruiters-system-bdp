@@ -11,6 +11,9 @@ export declare class RecruitmentFormController {
     private cleanupFiles;
     private deleteOldFile;
     private deleteAllFiles;
+    private generateEmployeeId;
+    migrateToHiredEmployee(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>>>;
+    getCandidatesReadyForHiring(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>>>;
     createRecruitmentForm(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>>>;
     getRecruitmentForms(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>>>;
     getRecruitmentFormById(req: AuthenticatedRequest, res: Response): Promise<Response<any, Record<string, any>>>;

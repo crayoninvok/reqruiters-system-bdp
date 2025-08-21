@@ -20,6 +20,8 @@ model User {
   
   // Relation to track recruiter data created by this user
   recruitersCreated RecruiterData[]
+  // Relation to track hired employees processed by this user
+  hiredEmployeesProcessed HiredEmployee[]
 }
 
 model RecruitmentForm {
@@ -53,6 +55,9 @@ model RecruitmentForm {
   
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt
+  
+  // Relation to HiredEmployee (one-to-one)
+  hiredEmployee      HiredEmployee?
 }
 
 model RecruiterData {
@@ -76,6 +81,56 @@ model RecruiterData {
   
   @@index([department])
   @@index([employeeId])
+}
+
+model HiredEmployee {
+  id                    String            @id @default(cuid())
+  employeeId            String            @unique // Company employee ID
+  
+  // Reference to original recruitment form
+  recruitmentFormId     String            @unique
+  recruitmentForm       RecruitmentForm   @relation(fields: [recruitmentFormId], references: [id])
+  
+  // Employment details
+  hiredPosition         Position          // Final hired position (might differ from applied)
+  department            Department
+  startDate             DateTime          // First day of work
+  probationEndDate      DateTime?         // End of probation period
+  employmentStatus      EmploymentStatus  @default(PROBATION)
+  contractType          ContractType      @default(PERMANENT)
+  
+  // Salary and benefits
+  basicSalary           Decimal?          @db.Decimal(15,2)
+  allowances            Json?             // Store allowances as JSON
+  
+  // Supervisor/reporting
+  supervisorId          String?
+  supervisor            HiredEmployee?    @relation("SupervisorSubordinate", fields: [supervisorId], references: [id])
+  subordinates          HiredEmployee[]   @relation("SupervisorSubordinate")
+  
+  // HR processing info
+  processedById         String
+  processedBy           User              @relation(fields: [processedById], references: [id])
+  hiredDate             DateTime          @default(now()) // When the hiring was processed
+  
+  // Additional employment info
+  workLocation          String?
+  shiftPattern          ShiftPattern      @default(DAY_SHIFT)
+  emergencyContactName  String?
+  emergencyContactPhone String?
+  
+  // Status tracking
+  isActive              Boolean           @default(true)
+  terminationDate       DateTime?
+  terminationReason     String?
+  
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
+  
+  @@index([employeeId])
+  @@index([department])
+  @@index([employmentStatus])
+  @@index([startDate])
 }
 
 enum Role {
@@ -123,14 +178,49 @@ enum Position {
   MECHANIC_INSTRUCTOR
   DEPT_HEAD_PLANT_LOGISTIC
   OPERATOR_WATER_TRUCK
-OPERATOR_CRANE_TRUCK
-HRGA_ADMIN
-CAMP_SERVICE_TECHNICIAN
-CAMP_SERVICE_HELPER
-DEPT_HEAD_HRGA
-TRAINER_MECHANIC
-TRAINER_DOUBLE_TRAILER
-GA_INFRASTRUCTURE
+  OPERATOR_CRANE_TRUCK
+  HRGA_ADMIN
+  CAMP_SERVICE_TECHNICIAN
+  CAMP_SERVICE_HELPER
+  DEPT_HEAD_HRGA
+  TRAINER_MECHANIC
+  TRAINER_DOUBLE_TRAILER
+  GA_INFRASTRUCTURE
+  TOOLKEEPER
+}
+
+enum Department {
+  PRODUCTION_ENGINEERING
+  OPERATIONAL
+  PLANT
+  LOGISTIC
+  HUMAN_RESOURCES_GA
+  HEALTH_SAFETY_ENVIRONMENT
+  PURCHASING
+  INFORMATION_TECHNOLOGY
+  MEDICAL
+  TRAINING_DEVELOPMENT
+}
+
+enum EmploymentStatus {
+  PROBATION
+  PERMANENT
+  CONTRACT
+  TERMINATED
+  RESIGNED
+}
+
+enum ContractType {
+  PERMANENT
+  CONTRACT
+  INTERNSHIP
+}
+
+enum ShiftPattern {
+  DAY_SHIFT
+  NIGHT_SHIFT
+  ROTATING
+  FLEXIBLE
 }
 
 enum Province {
@@ -260,6 +350,7 @@ enum RecruitmentStatus {
   MEDICAL_FOLLOWUP
   REJECTED
   COMPLETED
+  HIRED // Added new status for when someone is hired
 }
 
 enum ExperienceLevel {

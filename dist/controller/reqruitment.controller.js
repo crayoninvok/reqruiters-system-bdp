@@ -66,6 +66,206 @@ class RecruitmentFormController {
             }
         }
     }
+    async generateEmployeeId(department) {
+        const departmentPrefixes = {
+            PRODUCTION_ENGINEERING: "PE",
+            OPERATIONAL: "OP",
+            PLANT: "PL",
+            LOGISTIC: "LG",
+            HUMAN_RESOURCES_GA: "HR",
+            HEALTH_SAFETY_ENVIRONMENT: "HSE",
+            PURCHASING: "PUR",
+            INFORMATION_TECHNOLOGY: "IT",
+            MEDICAL: "MED",
+            TRAINING_DEVELOPMENT: "TD",
+        };
+        const prefix = departmentPrefixes[department];
+        const year = new Date().getFullYear().toString().slice(-2);
+        const lastEmployee = await prisma.hiredEmployee.findFirst({
+            where: {
+                employeeId: {
+                    startsWith: `${prefix}${year}`,
+                },
+            },
+            orderBy: {
+                employeeId: "desc",
+            },
+        });
+        let nextNumber = 1;
+        if (lastEmployee) {
+            const lastNumber = parseInt(lastEmployee.employeeId.slice(-4));
+            nextNumber = lastNumber + 1;
+        }
+        return `${prefix}${year}${nextNumber.toString().padStart(4, "0")}`;
+    }
+    async migrateToHiredEmployee(req, res) {
+        try {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+                return res.status(403).json({
+                    message: "Access denied. Only HR or ADMIN can migrate hired employees",
+                });
+            }
+            const { recruitmentFormId, employeeId, hiredPosition, department, startDate, probationEndDate, contractType = client_1.ContractType.PERMANENT, basicSalary, allowances, supervisorId, workLocation, shiftPattern = client_1.ShiftPattern.DAY_SHIFT, emergencyContactName, emergencyContactPhone, } = req.body;
+            if (!recruitmentFormId || !hiredPosition || !department || !startDate) {
+                return res.status(400).json({
+                    message: "Recruitment form ID, hired position, department, and start date are required",
+                });
+            }
+            const recruitmentForm = await prisma.recruitmentForm.findUnique({
+                where: { id: recruitmentFormId },
+                include: { hiredEmployee: true },
+            });
+            if (!recruitmentForm) {
+                return res.status(404).json({
+                    message: "Recruitment form not found",
+                });
+            }
+            if (recruitmentForm.status !== client_1.RecruitmentStatus.HIRED) {
+                return res.status(400).json({
+                    message: "Only candidates with HIRED status can be migrated to employees",
+                });
+            }
+            if (recruitmentForm.hiredEmployee) {
+                return res.status(400).json({
+                    message: "This candidate has already been migrated to hired employee",
+                });
+            }
+            if (!Object.values(client_1.Position).includes(hiredPosition)) {
+                return res.status(400).json({ message: "Invalid hired position" });
+            }
+            if (!Object.values(client_1.Department).includes(department)) {
+                return res.status(400).json({ message: "Invalid department" });
+            }
+            if (contractType && !Object.values(client_1.ContractType).includes(contractType)) {
+                return res.status(400).json({ message: "Invalid contract type" });
+            }
+            if (shiftPattern && !Object.values(client_1.ShiftPattern).includes(shiftPattern)) {
+                return res.status(400).json({ message: "Invalid shift pattern" });
+            }
+            if (supervisorId) {
+                const supervisor = await prisma.hiredEmployee.findUnique({
+                    where: { id: supervisorId },
+                });
+                if (!supervisor) {
+                    return res.status(400).json({ message: "Supervisor not found" });
+                }
+            }
+            let finalEmployeeId = employeeId;
+            if (!finalEmployeeId) {
+                finalEmployeeId = await this.generateEmployeeId(department);
+            }
+            else {
+                const existingEmployee = await prisma.hiredEmployee.findUnique({
+                    where: { employeeId: finalEmployeeId },
+                });
+                if (existingEmployee) {
+                    return res.status(400).json({
+                        message: "Employee ID already exists",
+                    });
+                }
+            }
+            const startDateTime = new Date(startDate);
+            let probationEndDateTime = null;
+            if (probationEndDate) {
+                probationEndDateTime = new Date(probationEndDate);
+                if (probationEndDateTime <= startDateTime) {
+                    return res.status(400).json({
+                        message: "Probation end date must be after start date",
+                    });
+                }
+            }
+            const hiredEmployee = await prisma.hiredEmployee.create({
+                data: {
+                    employeeId: finalEmployeeId,
+                    recruitmentFormId,
+                    hiredPosition,
+                    department,
+                    startDate: startDateTime,
+                    probationEndDate: probationEndDateTime,
+                    employmentStatus: client_1.EmploymentStatus.PROBATION,
+                    contractType,
+                    basicSalary: basicSalary ? parseFloat(basicSalary.toString()) : null,
+                    allowances,
+                    supervisorId,
+                    workLocation,
+                    shiftPattern,
+                    emergencyContactName,
+                    emergencyContactPhone,
+                    processedById: req.user.id,
+                },
+                include: {
+                    recruitmentForm: {
+                        select: {
+                            fullName: true,
+                            appliedPosition: true,
+                        },
+                    },
+                    supervisor: {
+                        select: {
+                            employeeId: true,
+                            recruitmentForm: {
+                                select: {
+                                    fullName: true,
+                                },
+                            },
+                        },
+                    },
+                    processedBy: {
+                        select: {
+                            name: true,
+                            email: true,
+                        },
+                    },
+                },
+            });
+            return res.status(201).json({
+                message: "Candidate successfully migrated to hired employee",
+                hiredEmployee,
+            });
+        }
+        catch (error) {
+            console.error("Error migrating to hired employee:", error);
+            return res.status(500).json({
+                message: "Internal server error",
+            });
+        }
+    }
+    async getCandidatesReadyForHiring(req, res) {
+        try {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+                return res.status(403).json({
+                    message: "Access denied. Only HR or ADMIN can view candidates ready for hiring",
+                });
+            }
+            const candidates = await prisma.recruitmentForm.findMany({
+                where: {
+                    status: client_1.RecruitmentStatus.HIRED,
+                    hiredEmployee: null,
+                },
+                orderBy: { updatedAt: "desc" },
+                select: {
+                    id: true,
+                    fullName: true,
+                    appliedPosition: true,
+                    whatsappNumber: true,
+                    education: true,
+                    province: true,
+                    updatedAt: true,
+                },
+            });
+            return res.status(200).json({
+                message: "Candidates ready for hiring retrieved successfully",
+                candidates,
+                count: candidates.length,
+            });
+        }
+        catch (error) {
+            console.error("Error getting candidates ready for hiring:", error);
+            return res.status(500).json({
+                message: "Internal server error",
+            });
+        }
+    }
     async createRecruitmentForm(req, res) {
         try {
             if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
@@ -306,6 +506,16 @@ class RecruitmentFormController {
             const { id } = req.params;
             const recruitmentForm = await prisma.recruitmentForm.findUnique({
                 where: { id },
+                include: {
+                    hiredEmployee: {
+                        select: {
+                            employeeId: true,
+                            department: true,
+                            startDate: true,
+                            employmentStatus: true,
+                        },
+                    },
+                },
             });
             if (!recruitmentForm) {
                 return res.status(404).json({
@@ -335,10 +545,16 @@ class RecruitmentFormController {
             const updateData = req.body;
             const existingForm = await prisma.recruitmentForm.findUnique({
                 where: { id },
+                include: { hiredEmployee: true },
             });
             if (!existingForm) {
                 return res.status(404).json({
                     message: "Recruitment form not found",
+                });
+            }
+            if (existingForm.hiredEmployee && updateData.status !== client_1.RecruitmentStatus.HIRED) {
+                return res.status(400).json({
+                    message: "Cannot update recruitment form that has been migrated to hired employee",
                 });
             }
             if (updateData.province &&
