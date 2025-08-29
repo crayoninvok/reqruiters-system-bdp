@@ -183,7 +183,7 @@ export class AuthController {
           updatedAt: true,
           _count: {
             select: {
-              recruitersCreated: true
+              hiredEmployeesProcessed: true
             }
           }
         },
@@ -233,7 +233,7 @@ export class AuthController {
           updatedAt: true,
           _count: {
             select: {
-              recruitersCreated: true
+              hiredEmployeesProcessed: true
             }
           }
         }
@@ -361,7 +361,7 @@ export class AuthController {
         include: {
           _count: {
             select: {
-              recruitersCreated: true
+              hiredEmployeesProcessed: true
             }
           }
         }
@@ -371,10 +371,10 @@ export class AuthController {
         return res.status(404).json({ message: "HR user not found" });
       }
 
-      // Check if user has created recruiter data
-      if (existingHRUser._count.recruitersCreated > 0) {
+      // Check if user has processed hired employees
+      if (existingHRUser._count.hiredEmployeesProcessed > 0) {
         return res.status(400).json({ 
-          message: `Cannot delete HR user. This user has created ${existingHRUser._count.recruitersCreated} recruiter record(s). Please reassign or delete those records first.`
+          message: `Cannot delete HR user. This user has processed ${existingHRUser._count.hiredEmployeesProcessed} hired employee record(s). Please reassign or delete those records first.`
         });
       }
 

@@ -9,6 +9,6 @@ export declare class AnalyticsController {
     getApplicationsByExperience(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     getApplicationsByMaritalStatus(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     getAgeDistribution(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
-    getRecruitersByDepartment(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
+    getHRUsersByRole(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
     getCustomAnalytics(req: Request, res: Response): Promise<Response<any, Record<string, any>>>;
 }

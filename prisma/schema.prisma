@@ -17,9 +17,6 @@ model User {
   avatarUrl String?  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
-  // Relation to track recruiter data created by this user
-  recruitersCreated RecruiterData[]
   // Relation to track hired employees processed by this user
   hiredEmployeesProcessed HiredEmployee[]
 }
@@ -61,29 +58,6 @@ model RecruitmentForm {
   
   // Relation to HiredEmployee (one-to-one)
   hiredEmployee      HiredEmployee?
-}
-
-model RecruiterData {
-  id          String    @id @default(cuid())
-  fullName    String
-  email       String    @unique
-  phoneNumber String
-  address     String?
-  department  String?
-  position    String?
-  hireDate    DateTime?
-  employeeId  String?   @unique
-  notes       String?
-  
-  // Track who created this record
-  createdById String
-  createdBy   User      @relation(fields: [createdById], references: [id])
-  
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  
-  @@index([department])
-  @@index([employeeId])
 }
 
 model HiredEmployee {

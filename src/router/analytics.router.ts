@@ -64,12 +64,6 @@ export class AnalyticsRouter {
       this.analyticsController.getApplicationsTrend.bind(this.analyticsController)
     );
 
-    // Recruiter analytics
-    this.router.get(
-      "/recruiters/department",
-      this.analyticsController.getRecruitersByDepartment.bind(this.analyticsController)
-    );
-
     // Custom analytics with query parameters
     this.router.get(
       "/custom",

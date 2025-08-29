@@ -21,7 +21,6 @@ class AnalyticsRouter {
         this.router.get("/applications/marital-status", this.analyticsController.getApplicationsByMaritalStatus.bind(this.analyticsController));
         this.router.get("/applications/age-distribution", this.analyticsController.getAgeDistribution.bind(this.analyticsController));
         this.router.get("/applications/trend", this.analyticsController.getApplicationsTrend.bind(this.analyticsController));
-        this.router.get("/recruiters/department", this.analyticsController.getRecruitersByDepartment.bind(this.analyticsController));
         this.router.get("/custom", this.analyticsController.getCustomAnalytics.bind(this.analyticsController));
     }
     getRouter() {
