@@ -39,10 +39,16 @@ class PublicRecruitmentController {
     }
     async submitRecruitmentForm(req, res) {
         try {
-            const { fullName, birthPlace, birthDate, gender, province, religion, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
+            console.log('=== START RECRUITMENT FORM SUBMISSION ===');
+            console.log('Request body:', JSON.stringify(req.body, null, 2));
+            console.log('Files received:', req.files ? Object.keys(req.files) : 'No files');
+            const { fullName, birthPlace, birthDate, gender, ktp, kk, npwp, province, religion, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
+            console.log('Step 1: Basic field validation');
             if (!fullName ||
                 !birthPlace ||
                 !gender ||
+                !ktp ||
+                !kk ||
                 !birthDate ||
                 !province ||
                 !religion ||
@@ -58,71 +64,203 @@ class PublicRecruitmentController {
                 !maritalStatus ||
                 !appliedPosition ||
                 !experienceLevel) {
+                console.log('❌ Basic validation failed - missing required fields');
                 return res.status(400).json({
                     message: "All required fields must be provided",
                     error: "MISSING_REQUIRED_FIELDS",
+                    missingFields: {
+                        fullName: !fullName,
+                        birthPlace: !birthPlace,
+                        gender: !gender,
+                        ktp: !ktp,
+                        kk: !kk,
+                        birthDate: !birthDate,
+                        province: !province,
+                        religion: !religion,
+                        heightCm: !heightCm,
+                        weightKg: !weightKg,
+                        shirtSize: !shirtSize,
+                        safetyShoesSize: !safetyShoesSize,
+                        pantsSize: !pantsSize,
+                        address: !address,
+                        whatsappNumber: !whatsappNumber,
+                        education: !education,
+                        schoolName: !schoolName,
+                        maritalStatus: !maritalStatus,
+                        appliedPosition: !appliedPosition,
+                        experienceLevel: !experienceLevel
+                    }
                 });
             }
-            if (!Object.values(client_1.Province).includes(province)) {
+            console.log('✅ Basic validation passed');
+            console.log('Step 2: Format validation');
+            console.log('Validating KTP:', ktp);
+            const ktpRegex = /^\d{16}$/;
+            if (!ktpRegex.test(ktp.trim())) {
+                console.log('❌ KTP format validation failed');
                 return res.status(400).json({
-                    message: "Invalid province",
-                    error: "INVALID_PROVINCE",
+                    message: "KTP harus standar 16 digits",
+                    error: "INVALID_KTP_FORMAT",
+                    received: ktp,
+                    expectedFormat: "16 digits only"
                 });
             }
-            if (!Object.values(client_1.Gender).includes(gender)) {
+            console.log('✅ KTP format valid');
+            console.log('Validating KK:', kk);
+            const kkRegex = /^\d{16}$/;
+            if (!kkRegex.test(kk.trim())) {
+                console.log('❌ KK format validation failed');
                 return res.status(400).json({
-                    message: "Invalid gender",
-                    error: "INVALID_GENDER",
+                    message: "KK harus standar 16 digits",
+                    error: "INVALID_KK_FORMAT",
+                    received: kk,
+                    expectedFormat: "16 digits only"
                 });
             }
-            if (!Object.values(client_1.Religion).includes(religion)) {
+            console.log('✅ KK format valid');
+            if (npwp && npwp.trim()) {
+                console.log('Validating NPWP:', npwp);
+                const npwpRegex = /^\d{15,16}$/;
+                if (!npwpRegex.test(npwp.trim())) {
+                    console.log('❌ NPWP format validation failed');
+                    return res.status(400).json({
+                        message: "NPWP harus 15 atau 16 digit",
+                        error: "INVALID_NPWP_FORMAT",
+                        received: npwp,
+                        expectedFormat: "15 or 16 digits only"
+                    });
+                }
+                console.log('✅ NPWP format valid');
+            }
+            console.log('Step 3: WhatsApp validation');
+            console.log('Original WhatsApp:', whatsappNumber);
+            let normalizedWhatsapp = whatsappNumber
+                .replace(/\s+/g, "")
+                .replace(/[-]/g, "");
+            console.log('After cleanup:', normalizedWhatsapp);
+            if (normalizedWhatsapp.startsWith("08")) {
+                normalizedWhatsapp = "+62" + normalizedWhatsapp.substring(1);
+            }
+            else if (normalizedWhatsapp.startsWith("62") &&
+                !normalizedWhatsapp.startsWith("+62")) {
+                normalizedWhatsapp = "+" + normalizedWhatsapp;
+            }
+            else if (!normalizedWhatsapp.startsWith("+62")) {
+                console.log('❌ WhatsApp format validation failed - wrong prefix');
                 return res.status(400).json({
-                    message: "Invalid religion",
-                    error: "INVALID_RELIGION",
+                    message: "WhatsApp number must start with +62, 62, or 08",
+                    error: "INVALID_WHATSAPP_FORMAT",
+                    received: whatsappNumber,
+                    normalized: normalizedWhatsapp
                 });
             }
-            if (!Object.values(client_1.ShirtSize).includes(shirtSize)) {
+            console.log('After normalization:', normalizedWhatsapp);
+            const whatsappRegex = /^\+62[0-9]{9,13}$/;
+            if (!whatsappRegex.test(normalizedWhatsapp)) {
+                console.log('❌ WhatsApp regex validation failed');
                 return res.status(400).json({
-                    message: "Invalid shirt size",
-                    error: "INVALID_SHIRT_SIZE",
+                    message: "Invalid WhatsApp number format. Must be +62 followed by 9-13 digits",
+                    error: "INVALID_WHATSAPP_NUMBER",
+                    received: whatsappNumber,
+                    normalized: normalizedWhatsapp
                 });
             }
-            if (!Object.values(client_1.SafetyShoesSize).includes(safetyShoesSize)) {
-                return res.status(400).json({
-                    message: "Invalid safety shoes size",
-                    error: "INVALID_SAFETY_SHOES_SIZE",
+            console.log('✅ WhatsApp format valid:', normalizedWhatsapp);
+            console.log('Step 4: Database duplicate checks');
+            try {
+                console.log('Checking KTP duplicates...');
+                const existingKtp = await prisma.recruitmentForm.findUnique({
+                    where: { ktp: ktp.trim() },
+                    select: { id: true, fullName: true },
+                });
+                if (existingKtp) {
+                    console.log('❌ Duplicate KTP found:', existingKtp);
+                    return res.status(409).json({
+                        message: "Nomor KTP sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_KTP",
+                        existingApplication: existingKtp
+                    });
+                }
+                console.log('✅ KTP unique check passed');
+                console.log('Checking KK duplicates...');
+                const existingKk = await prisma.recruitmentForm.findUnique({
+                    where: { kk: kk.trim() },
+                    select: { id: true, fullName: true },
+                });
+                if (existingKk) {
+                    console.log('❌ Duplicate KK found:', existingKk);
+                    return res.status(409).json({
+                        message: "Nomor KK sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_KK",
+                        existingApplication: existingKk
+                    });
+                }
+                console.log('✅ KK unique check passed');
+                console.log('Checking WhatsApp duplicates...');
+                const existingWhatsapp = await prisma.recruitmentForm.findFirst({
+                    where: { whatsappNumber: normalizedWhatsapp },
+                    select: { id: true, fullName: true },
+                });
+                if (existingWhatsapp) {
+                    console.log('❌ Duplicate WhatsApp found:', existingWhatsapp);
+                    return res.status(409).json({
+                        message: "Nomor WhatsApp sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_WHATSAPP",
+                        existingApplication: existingWhatsapp
+                    });
+                }
+                console.log('✅ WhatsApp unique check passed');
+                if (npwp && npwp.trim()) {
+                    console.log('Checking NPWP duplicates...');
+                    const existingNpwp = await prisma.recruitmentForm.findUnique({
+                        where: { npwp: npwp.trim() },
+                        select: { id: true, fullName: true },
+                    });
+                    if (existingNpwp) {
+                        console.log('❌ Duplicate NPWP found:', existingNpwp);
+                        return res.status(409).json({
+                            message: "Nomor NPWP sudah terdaftar dalam sistem",
+                            error: "DUPLICATE_NPWP",
+                            existingApplication: existingNpwp
+                        });
+                    }
+                    console.log('✅ NPWP unique check passed');
+                }
+            }
+            catch (dbError) {
+                console.error('❌ Database error during duplicate checks:', dbError);
+                return res.status(500).json({
+                    message: "Database error during validation",
+                    error: "DATABASE_ERROR",
+                    details: dbError instanceof Error ? dbError.message : 'Unknown database error'
                 });
             }
-            if (!Object.values(client_1.PantsSize).includes(pantsSize)) {
-                return res.status(400).json({
-                    message: "Invalid pants size",
-                    error: "INVALID_PANTS_SIZE",
-                });
+            console.log('Step 5: Enum validations');
+            const enumValidations = [
+                { value: province, enum: client_1.Province, name: 'Province' },
+                { value: gender, enum: client_1.Gender, name: 'Gender' },
+                { value: religion, enum: client_1.Religion, name: 'Religion' },
+                { value: shirtSize, enum: client_1.ShirtSize, name: 'ShirtSize' },
+                { value: safetyShoesSize, enum: client_1.SafetyShoesSize, name: 'SafetyShoesSize' },
+                { value: pantsSize, enum: client_1.PantsSize, name: 'PantsSize' },
+                { value: education, enum: client_1.EducationLevel, name: 'EducationLevel' },
+                { value: maritalStatus, enum: client_1.MaritalStatus, name: 'MaritalStatus' },
+                { value: appliedPosition, enum: client_1.Position, name: 'Position' },
+                { value: experienceLevel, enum: client_1.ExperienceLevel, name: 'ExperienceLevel' }
+            ];
+            for (const validation of enumValidations) {
+                if (!Object.values(validation.enum).includes(validation.value)) {
+                    console.log(`❌ Invalid ${validation.name}:`, validation.value);
+                    return res.status(400).json({
+                        message: `Invalid ${validation.name.toLowerCase()}`,
+                        error: `INVALID_${validation.name.toUpperCase()}`,
+                        received: validation.value,
+                        allowedValues: Object.values(validation.enum)
+                    });
+                }
             }
-            if (!Object.values(client_1.EducationLevel).includes(education)) {
-                return res.status(400).json({
-                    message: "Invalid education level",
-                    error: "INVALID_EDUCATION_LEVEL",
-                });
-            }
-            if (!Object.values(client_1.MaritalStatus).includes(maritalStatus)) {
-                return res.status(400).json({
-                    message: "Invalid marital status",
-                    error: "INVALID_MARITAL_STATUS",
-                });
-            }
-            if (!Object.values(client_1.Position).includes(appliedPosition)) {
-                return res.status(400).json({
-                    message: "Invalid applied position",
-                    error: "INVALID_APPLIED_POSITION",
-                });
-            }
-            if (!Object.values(client_1.ExperienceLevel).includes(experienceLevel)) {
-                return res.status(400).json({
-                    message: "Invalid experience level",
-                    error: "INVALID_EXPERIENCE_LEVEL",
-                });
-            }
+            console.log('✅ All enum validations passed');
+            console.log('Step 6: Certificate processing');
             let certificateArray = [];
             if (certificate) {
                 if (Array.isArray(certificate)) {
@@ -133,37 +271,44 @@ class PublicRecruitmentController {
                 }
                 for (const cert of certificateArray) {
                     if (!Object.values(client_1.Certificate).includes(cert)) {
+                        console.log('❌ Invalid certificate:', cert);
                         return res.status(400).json({
                             message: `Invalid certificate: ${cert}`,
                             error: "INVALID_CERTIFICATE",
+                            received: cert,
+                            allowedValues: Object.values(client_1.Certificate)
                         });
                     }
                 }
             }
+            console.log('✅ Certificate processing completed');
+            console.log('Step 7: Numeric validations');
             const height = parseInt(heightCm);
             const weight = parseInt(weightKg);
             if (isNaN(height) || height < 100 || height > 250) {
+                console.log('❌ Invalid height:', heightCm);
                 return res.status(400).json({
-                    message: "Height must be between 100-250 cm",
+                    message: "Tinggi harus diantara 100-250 cm",
                     error: "INVALID_HEIGHT",
+                    received: heightCm,
+                    parsed: height
                 });
             }
             if (isNaN(weight) || weight < 30 || weight > 200) {
+                console.log('❌ Invalid weight:', weightKg);
                 return res.status(400).json({
                     message: "Weight must be between 30-200 kg",
                     error: "INVALID_WEIGHT",
+                    received: weightKg,
+                    parsed: weight
                 });
             }
-            const whatsappRegex = /^(\+62|62|0)[0-9]{8,13}$/;
-            if (!whatsappRegex.test(whatsappNumber.replace(/\s+/g, ""))) {
-                return res.status(400).json({
-                    message: "Invalid WhatsApp number format",
-                    error: "INVALID_WHATSAPP_NUMBER",
-                });
-            }
+            console.log('✅ Numeric validations passed');
+            console.log('Step 8: File processing');
             const files = req.files;
             const documentUrls = {};
             if (files) {
+                console.log('Files to process:', Object.keys(files));
                 if (files.documentPhoto)
                     documentUrls.documentPhotoUrl = files.documentPhoto[0].path;
                 if (files.documentCv)
@@ -176,43 +321,65 @@ class PublicRecruitmentController {
                     documentUrls.documentVaccineUrl = files.documentVaccine[0].path;
                 if (files.supportingDocs)
                     documentUrls.supportingDocsUrl = files.supportingDocs[0].path;
+                console.log('Document URLs prepared:', Object.keys(documentUrls));
             }
-            const newRecruitmentForm = await prisma.recruitmentForm.create({
-                data: {
-                    fullName: fullName.trim(),
-                    birthPlace: birthPlace.trim(),
-                    birthDate: new Date(birthDate),
-                    gender,
-                    religion,
-                    province,
-                    heightCm: height,
-                    weightKg: weight,
-                    shirtSize,
-                    safetyShoesSize,
-                    pantsSize,
-                    address: address.trim(),
-                    whatsappNumber: whatsappNumber.replace(/\s+/g, ""),
-                    certificate: certificateArray,
-                    education,
-                    schoolName: schoolName.trim(),
-                    jurusan: jurusan?.trim(),
-                    workExperience: workExperience?.trim(),
-                    maritalStatus,
-                    status: client_1.RecruitmentStatus.PENDING,
-                    appliedPosition,
-                    experienceLevel,
-                    ...documentUrls,
-                },
-            });
-            return res.status(201).json({
-                message: "Recruitment form submitted successfully! We will review your application and contact you soon.",
-                success: true,
-                applicationId: newRecruitmentForm.id,
-                submittedAt: newRecruitmentForm.createdAt,
-            });
+            console.log('Step 9: Creating recruitment form in database');
+            try {
+                const newRecruitmentForm = await prisma.recruitmentForm.create({
+                    data: {
+                        fullName: fullName.trim(),
+                        birthPlace: birthPlace.trim(),
+                        birthDate: new Date(birthDate),
+                        gender,
+                        ktp: ktp.trim(),
+                        kk: kk.trim(),
+                        npwp: npwp?.trim() || null,
+                        religion,
+                        province,
+                        heightCm: height,
+                        weightKg: weight,
+                        shirtSize,
+                        safetyShoesSize,
+                        pantsSize,
+                        address: address.trim(),
+                        whatsappNumber: normalizedWhatsapp,
+                        certificate: certificateArray,
+                        education,
+                        schoolName: schoolName.trim(),
+                        jurusan: jurusan?.trim(),
+                        workExperience: workExperience?.trim(),
+                        maritalStatus,
+                        status: client_1.RecruitmentStatus.PENDING,
+                        appliedPosition,
+                        experienceLevel,
+                        ...documentUrls,
+                    },
+                });
+                console.log('✅ Recruitment form created successfully:', newRecruitmentForm.id);
+                console.log('=== END RECRUITMENT FORM SUBMISSION ===');
+                return res.status(201).json({
+                    message: "Recruitment form submitted successfully! We will review your application and contact you soon.",
+                    success: true,
+                    applicationId: newRecruitmentForm.id,
+                    submittedAt: newRecruitmentForm.createdAt,
+                });
+            }
+            catch (createError) {
+                console.error('❌ Error creating recruitment form:', createError);
+                if (req.files) {
+                    const files = req.files;
+                    await this.cleanupFiles(files);
+                }
+                return res.status(500).json({
+                    message: "Failed to save recruitment form",
+                    error: "DATABASE_CREATE_ERROR",
+                    details: createError instanceof Error ? createError.message : 'Unknown create error'
+                });
+            }
         }
         catch (error) {
-            console.error("Error submitting recruitment form:", error);
+            console.error('❌ UNEXPECTED ERROR in recruitment form submission:', error);
+            console.error('Error stack:', error.stack);
             if (req.files) {
                 const files = req.files;
                 await this.cleanupFiles(files);
@@ -221,6 +388,10 @@ class PublicRecruitmentController {
                 message: "Internal server error. Please try again later.",
                 error: "INTERNAL_SERVER_ERROR",
                 success: false,
+                ...(process.env.NODE_ENV === 'development' && {
+                    details: error.message,
+                    stack: error.stack
+                })
             });
         }
     }
@@ -352,11 +523,16 @@ class PublicRecruitmentController {
     }
     async submitWithUrls(req, res) {
         try {
-            const { fullName, birthPlace, birthDate, province, religion, heightCm, weightKg, gender, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl, } = req.body;
+            console.log('=== START RECRUITMENT FORM SUBMISSION WITH URLS ===');
+            console.log('Request body:', JSON.stringify(req.body, null, 2));
+            const { fullName, birthPlace, birthDate, province, religion, heightCm, weightKg, gender, ktp, kk, npwp, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl, } = req.body;
+            console.log('Step 1: Basic field validation');
             if (!fullName ||
                 !birthPlace ||
                 !birthDate ||
                 !gender ||
+                !ktp ||
+                !kk ||
                 !religion ||
                 !province ||
                 !heightCm ||
@@ -371,11 +547,203 @@ class PublicRecruitmentController {
                 !maritalStatus ||
                 !appliedPosition ||
                 !experienceLevel) {
+                console.log('❌ Basic validation failed - missing required fields');
                 return res.status(400).json({
                     message: "All required fields must be provided",
                     error: "MISSING_REQUIRED_FIELDS",
+                    missingFields: {
+                        fullName: !fullName,
+                        birthPlace: !birthPlace,
+                        birthDate: !birthDate,
+                        gender: !gender,
+                        ktp: !ktp,
+                        kk: !kk,
+                        religion: !religion,
+                        province: !province,
+                        heightCm: !heightCm,
+                        weightKg: !weightKg,
+                        shirtSize: !shirtSize,
+                        safetyShoesSize: !safetyShoesSize,
+                        pantsSize: !pantsSize,
+                        address: !address,
+                        whatsappNumber: !whatsappNumber,
+                        education: !education,
+                        schoolName: !schoolName,
+                        maritalStatus: !maritalStatus,
+                        appliedPosition: !appliedPosition,
+                        experienceLevel: !experienceLevel
+                    }
                 });
             }
+            console.log('✅ Basic validation passed');
+            console.log('Step 2: Format validation');
+            console.log('Validating KTP:', ktp);
+            const ktpRegex = /^\d{16}$/;
+            if (!ktpRegex.test(ktp.trim())) {
+                console.log('❌ KTP format validation failed');
+                return res.status(400).json({
+                    message: "KTP must be exactly 16 digits",
+                    error: "INVALID_KTP_FORMAT",
+                    received: ktp,
+                    expectedFormat: "16 digits only"
+                });
+            }
+            console.log('✅ KTP format valid');
+            console.log('Validating KK:', kk);
+            const kkRegex = /^\d{16}$/;
+            if (!kkRegex.test(kk.trim())) {
+                console.log('❌ KK format validation failed');
+                return res.status(400).json({
+                    message: "KK must be exactly 16 digits",
+                    error: "INVALID_KK_FORMAT",
+                    received: kk,
+                    expectedFormat: "16 digits only"
+                });
+            }
+            console.log('✅ KK format valid');
+            if (npwp && npwp.trim()) {
+                console.log('Validating NPWP:', npwp);
+                const npwpRegex = /^\d{15,16}$/;
+                if (!npwpRegex.test(npwp.trim())) {
+                    console.log('❌ NPWP format validation failed');
+                    return res.status(400).json({
+                        message: "NPWP harus 15 atau 16 digits",
+                        error: "INVALID_NPWP_FORMAT",
+                        received: npwp,
+                        expectedFormat: "15 or 16 digits only"
+                    });
+                }
+                console.log('✅ NPWP format valid');
+            }
+            console.log('Step 3: WhatsApp validation');
+            console.log('Original WhatsApp:', whatsappNumber);
+            let normalizedWhatsapp = whatsappNumber
+                .replace(/\s+/g, "")
+                .replace(/[-]/g, "");
+            console.log('After cleanup:', normalizedWhatsapp);
+            if (normalizedWhatsapp.startsWith("08")) {
+                normalizedWhatsapp = "+62" + normalizedWhatsapp.substring(1);
+            }
+            else if (normalizedWhatsapp.startsWith("62") &&
+                !normalizedWhatsapp.startsWith("+62")) {
+                normalizedWhatsapp = "+" + normalizedWhatsapp;
+            }
+            else if (!normalizedWhatsapp.startsWith("+62")) {
+                console.log('❌ WhatsApp format validation failed - wrong prefix');
+                return res.status(400).json({
+                    message: "WhatsApp number must start with +62, 62, or 08",
+                    error: "INVALID_WHATSAPP_FORMAT",
+                    received: whatsappNumber,
+                    normalized: normalizedWhatsapp
+                });
+            }
+            console.log('After normalization:', normalizedWhatsapp);
+            const whatsappRegex = /^\+62[0-9]{9,13}$/;
+            if (!whatsappRegex.test(normalizedWhatsapp)) {
+                console.log('❌ WhatsApp regex validation failed');
+                return res.status(400).json({
+                    message: "Invalid WhatsApp number format. Must be +62 followed by 9-13 digits",
+                    error: "INVALID_WHATSAPP_NUMBER",
+                    received: whatsappNumber,
+                    normalized: normalizedWhatsapp
+                });
+            }
+            console.log('✅ WhatsApp format valid:', normalizedWhatsapp);
+            console.log('Step 4: Database duplicate checks');
+            try {
+                console.log('Checking KTP duplicates...');
+                const existingKtp = await prisma.recruitmentForm.findUnique({
+                    where: { ktp: ktp.trim() },
+                    select: { id: true, fullName: true },
+                });
+                if (existingKtp) {
+                    console.log('❌ Duplicate KTP found:', existingKtp);
+                    return res.status(409).json({
+                        message: "Nomor KTP sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_KTP",
+                        existingApplication: existingKtp
+                    });
+                }
+                console.log('✅ KTP unique check passed');
+                console.log('Checking KK duplicates...');
+                const existingKk = await prisma.recruitmentForm.findUnique({
+                    where: { kk: kk.trim() },
+                    select: { id: true, fullName: true },
+                });
+                if (existingKk) {
+                    console.log('❌ Duplicate KK found:', existingKk);
+                    return res.status(409).json({
+                        message: "Nomor KK sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_KK",
+                        existingApplication: existingKk
+                    });
+                }
+                console.log('✅ KK unique check passed');
+                console.log('Checking WhatsApp duplicates...');
+                const existingWhatsapp = await prisma.recruitmentForm.findFirst({
+                    where: { whatsappNumber: normalizedWhatsapp },
+                    select: { id: true, fullName: true },
+                });
+                if (existingWhatsapp) {
+                    console.log('❌ Duplicate WhatsApp found:', existingWhatsapp);
+                    return res.status(409).json({
+                        message: "Nomor WhatsApp sudah terdaftar dalam sistem",
+                        error: "DUPLICATE_WHATSAPP",
+                        existingApplication: existingWhatsapp
+                    });
+                }
+                console.log('✅ WhatsApp unique check passed');
+                if (npwp && npwp.trim()) {
+                    console.log('Checking NPWP duplicates...');
+                    const existingNpwp = await prisma.recruitmentForm.findUnique({
+                        where: { npwp: npwp.trim() },
+                        select: { id: true, fullName: true },
+                    });
+                    if (existingNpwp) {
+                        console.log('❌ Duplicate NPWP found:', existingNpwp);
+                        return res.status(409).json({
+                            message: "Nomor NPWP sudah terdaftar dalam sistem",
+                            error: "DUPLICATE_NPWP",
+                            existingApplication: existingNpwp
+                        });
+                    }
+                    console.log('✅ NPWP unique check passed');
+                }
+            }
+            catch (dbError) {
+                console.error('❌ Database error during duplicate checks:', dbError);
+                return res.status(500).json({
+                    message: "Database error during validation",
+                    error: "DATABASE_ERROR",
+                    details: dbError instanceof Error ? dbError.message : 'Unknown database error'
+                });
+            }
+            console.log('Step 5: Enum validations');
+            const enumValidations = [
+                { value: province, enum: client_1.Province, name: 'Province' },
+                { value: gender, enum: client_1.Gender, name: 'Gender' },
+                { value: religion, enum: client_1.Religion, name: 'Religion' },
+                { value: shirtSize, enum: client_1.ShirtSize, name: 'ShirtSize' },
+                { value: safetyShoesSize, enum: client_1.SafetyShoesSize, name: 'SafetyShoesSize' },
+                { value: pantsSize, enum: client_1.PantsSize, name: 'PantsSize' },
+                { value: education, enum: client_1.EducationLevel, name: 'EducationLevel' },
+                { value: maritalStatus, enum: client_1.MaritalStatus, name: 'MaritalStatus' },
+                { value: appliedPosition, enum: client_1.Position, name: 'Position' },
+                { value: experienceLevel, enum: client_1.ExperienceLevel, name: 'ExperienceLevel' }
+            ];
+            for (const validation of enumValidations) {
+                if (!Object.values(validation.enum).includes(validation.value)) {
+                    console.log(`❌ Invalid ${validation.name}:`, validation.value);
+                    return res.status(400).json({
+                        message: `Invalid ${validation.name.toLowerCase()}`,
+                        error: `INVALID_${validation.name.toUpperCase()}`,
+                        received: validation.value,
+                        allowedValues: Object.values(validation.enum)
+                    });
+                }
+            }
+            console.log('✅ All enum validations passed');
+            console.log('Step 6: Certificate processing');
             let certificateArray = [];
             if (certificate) {
                 if (Array.isArray(certificate)) {
@@ -384,28 +752,78 @@ class PublicRecruitmentController {
                 else {
                     certificateArray = [certificate];
                 }
+                for (const cert of certificateArray) {
+                    if (!Object.values(client_1.Certificate).includes(cert)) {
+                        console.log('❌ Invalid certificate:', cert);
+                        return res.status(400).json({
+                            message: `Invalid certificate: ${cert}`,
+                            error: "INVALID_CERTIFICATE",
+                            received: cert,
+                            allowedValues: Object.values(client_1.Certificate)
+                        });
+                    }
+                }
             }
+            console.log('✅ Certificate processing completed');
+            console.log('Step 7: Numeric validations');
             const height = parseInt(heightCm);
             const weight = parseInt(weightKg);
             if (isNaN(height) || height < 100 || height > 250) {
+                console.log('❌ Invalid height:', heightCm);
                 return res.status(400).json({
                     message: "Height must be between 100-250 cm",
                     error: "INVALID_HEIGHT",
+                    received: heightCm,
+                    parsed: height
                 });
             }
             if (isNaN(weight) || weight < 30 || weight > 200) {
+                console.log('❌ Invalid weight:', weightKg);
                 return res.status(400).json({
                     message: "Weight must be between 30-200 kg",
                     error: "INVALID_WEIGHT",
+                    received: weightKg,
+                    parsed: weight
                 });
             }
-            const newRecruitmentForm = await prisma.recruitmentForm.create({
-                data: {
+            console.log('✅ Numeric validations passed');
+            console.log('Step 8: URL validations');
+            const urlFields = [
+                { name: 'documentPhotoUrl', value: documentPhotoUrl },
+                { name: 'documentCvUrl', value: documentCvUrl },
+                { name: 'documentKtpUrl', value: documentKtpUrl },
+                { name: 'documentSkckUrl', value: documentSkckUrl },
+                { name: 'documentVaccineUrl', value: documentVaccineUrl },
+                { name: 'supportingDocsUrl', value: supportingDocsUrl }
+            ];
+            for (const urlField of urlFields) {
+                if (urlField.value) {
+                    try {
+                        new URL(urlField.value);
+                        console.log(`✅ ${urlField.name} URL valid`);
+                    }
+                    catch (urlError) {
+                        console.log(`❌ Invalid ${urlField.name} URL:`, urlField.value);
+                        return res.status(400).json({
+                            message: `Invalid URL for ${urlField.name}`,
+                            error: "INVALID_URL",
+                            field: urlField.name,
+                            received: urlField.value
+                        });
+                    }
+                }
+            }
+            console.log('Step 9: Creating recruitment form in database with URLs');
+            try {
+                const createData = {
                     fullName: fullName.trim(),
                     birthPlace: birthPlace.trim(),
                     birthDate: new Date(birthDate),
                     province,
                     gender,
+                    ktp: ktp.trim(),
+                    kk: kk.trim(),
+                    npwp: npwp?.trim() || null,
                     religion,
                     heightCm: height,
                     weightKg: weight,
@@ -413,7 +831,7 @@ class PublicRecruitmentController {
                     safetyShoesSize,
                     pantsSize,
                     address: address.trim(),
-                    whatsappNumber: whatsappNumber.replace(/\s+/g, ""),
+                    whatsappNumber: normalizedWhatsapp,
                     certificate: certificateArray,
                     education,
                     schoolName: schoolName.trim(),
@@ -423,27 +841,46 @@ class PublicRecruitmentController {
                     status: client_1.RecruitmentStatus.PENDING,
                     appliedPosition,
                     experienceLevel,
-                    documentPhotoUrl,
-                    documentCvUrl,
-                    documentKtpUrl,
-                    documentSkckUrl,
-                    documentVaccineUrl,
-                    supportingDocsUrl,
-                },
-            });
-            return res.status(201).json({
-                message: "Recruitment form submitted successfully!",
-                success: true,
-                applicationId: newRecruitmentForm.id,
-                submittedAt: newRecruitmentForm.createdAt,
-            });
+                    ...(documentPhotoUrl && { documentPhotoUrl }),
+                    ...(documentCvUrl && { documentCvUrl }),
+                    ...(documentKtpUrl && { documentKtpUrl }),
+                    ...(documentSkckUrl && { documentSkckUrl }),
+                    ...(documentVaccineUrl && { documentVaccineUrl }),
+                    ...(supportingDocsUrl && { supportingDocsUrl }),
+                };
+                console.log('Data to be created:', JSON.stringify(createData, null, 2));
+                const newRecruitmentForm = await prisma.recruitmentForm.create({
+                    data: createData,
+                });
+                console.log('✅ Recruitment form created successfully:', newRecruitmentForm.id);
+                console.log('=== END RECRUITMENT FORM SUBMISSION WITH URLS ===');
+                return res.status(201).json({
+                    message: "Recruitment form submitted successfully!",
+                    success: true,
+                    applicationId: newRecruitmentForm.id,
+                    submittedAt: newRecruitmentForm.createdAt,
+                });
+            }
+            catch (createError) {
+                console.error('❌ Error creating recruitment form:', createError);
+                return res.status(500).json({
+                    message: "Failed to save recruitment form",
+                    error: "DATABASE_CREATE_ERROR",
+                    details: createError instanceof Error ? createError.message : 'Unknown create error'
+                });
+            }
         }
         catch (error) {
-            console.error("Error submitting recruitment form:", error);
+            console.error('❌ UNEXPECTED ERROR in recruitment form submission with URLs:', error);
+            console.error('Error stack:', error.stack);
             return res.status(500).json({
-                message: "Internal server error",
+                message: "Internal server error. Please try again later.",
                 error: "INTERNAL_SERVER_ERROR",
                 success: false,
+                ...(process.env.NODE_ENV === 'development' && {
+                    details: error.message,
+                    stack: error.stack
+                })
             });
         }
     }

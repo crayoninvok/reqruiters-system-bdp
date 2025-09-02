@@ -17,8 +17,12 @@ model User {
   avatarUrl String?  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  
   // Relation to track hired employees processed by this user
   hiredEmployeesProcessed HiredEmployee[]
+  
+  // Relation to track recruitment form status updates
+  recruitmentFormsUpdated RecruitmentForm[] @relation("StatusUpdatedBy")
 }
 
 model RecruitmentForm {
@@ -28,6 +32,12 @@ model RecruitmentForm {
   birthDate          DateTime
   gender             Gender @default(MALE)
   religion           Religion @default(ISLAM)
+  
+  // Identity Documents
+  ktp                String?            @unique           // 16 digits - National ID
+  kk                 String?           @unique           // 16 digits - Family Card (optional)
+  npwp               String?           @unique           // 15 digits - Tax ID (optional)
+  
   province           Province
   heightCm           Int
   weightKg           Int
@@ -52,6 +62,11 @@ model RecruitmentForm {
   supportingDocsUrl  String?
 
   experienceLevel    ExperienceLevel?
+  
+  // Status tracking fields
+  statusUpdatedById  String?           // Track who last updated the status
+  statusUpdatedBy    User?             @relation("StatusUpdatedBy", fields: [statusUpdatedById], references: [id])
+  statusUpdatedAt    DateTime?         // Track when status was last updated
   
   createdAt          DateTime          @default(now())
   updatedAt          DateTime          @updatedAt

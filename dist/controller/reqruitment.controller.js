@@ -471,6 +471,16 @@ class RecruitmentFormController {
                     skip,
                     take: limit,
                     orderBy: { createdAt: "desc" },
+                    include: {
+                        statusUpdatedBy: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                role: true
+                            }
+                        }
+                    }
                 }),
                 prisma.recruitmentForm.count({
                     where: whereClause,
@@ -507,6 +517,14 @@ class RecruitmentFormController {
             const recruitmentForm = await prisma.recruitmentForm.findUnique({
                 where: { id },
                 include: {
+                    statusUpdatedBy: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true
+                        }
+                    },
                     hiredEmployee: {
                         select: {
                             employeeId: true,
@@ -670,9 +688,31 @@ class RecruitmentFormController {
                 if (files.supportingDocs)
                     updateData.supportingDocsUrl = files.supportingDocs[0].path;
             }
+            if (updateData.status && updateData.status !== existingForm.status) {
+                updateData.statusUpdatedById = req.user.id;
+                updateData.statusUpdatedAt = new Date();
+            }
             const updatedForm = await prisma.recruitmentForm.update({
                 where: { id },
                 data: updateData,
+                include: {
+                    statusUpdatedBy: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true
+                        }
+                    },
+                    hiredEmployee: {
+                        select: {
+                            employeeId: true,
+                            department: true,
+                            startDate: true,
+                            employmentStatus: true,
+                        },
+                    },
+                },
             });
             return res.status(200).json({
                 message: "Recruitment form updated successfully",
@@ -792,11 +832,24 @@ class RecruitmentFormController {
             }
             const updatedForm = await prisma.recruitmentForm.update({
                 where: { id },
-                data: { status },
+                data: {
+                    status,
+                    statusUpdatedById: req.user.id,
+                    statusUpdatedAt: new Date()
+                },
                 select: {
                     id: true,
                     fullName: true,
                     status: true,
+                    statusUpdatedBy: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            role: true
+                        }
+                    },
+                    statusUpdatedAt: true,
                     updatedAt: true,
                 },
             });
