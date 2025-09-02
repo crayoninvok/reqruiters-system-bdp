@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import {
   PrismaClient,
   User,
+  Gender,
   Province,
   ShirtSize,
   SafetyShoesSize,
@@ -123,42 +124,42 @@ export class RecruitmentFormController {
 
   // Helper function to generate unique employee ID
   private async generateEmployeeId(department: Department): Promise<string> {
-  const departmentPrefixes: Record<Department, string> = {
-    PRODUCTION_ENGINEERING: "PE",
-    OPERATIONAL: "OP",
-    PLANT: "PL",
-    LOGISTIC: "LG",
-    HUMAN_RESOURCES_GA: "HR",
-    HEALTH_SAFETY_ENVIRONMENT: "HSE",
-    PURCHASING: "PUR",
-    INFORMATION_TECHNOLOGY: "IT",
-    MEDICAL: "MED",
-    TRAINING_DEVELOPMENT: "TD",
-  };
+    const departmentPrefixes: Record<Department, string> = {
+      PRODUCTION_ENGINEERING: "PE",
+      OPERATIONAL: "OP",
+      PLANT: "PL",
+      LOGISTIC: "LG",
+      HUMAN_RESOURCES_GA: "HR",
+      HEALTH_SAFETY_ENVIRONMENT: "HSE",
+      PURCHASING: "PUR",
+      INFORMATION_TECHNOLOGY: "IT",
+      MEDICAL: "MED",
+      TRAINING_DEVELOPMENT: "TD",
+    };
 
-  const prefix = departmentPrefixes[department];
-  const year = new Date().getFullYear().toString().slice(-2);
-  
-  // Get the last employee ID for this department and year
-  const lastEmployee = await prisma.hiredEmployee.findFirst({
-    where: {
-      employeeId: {
-        startsWith: `${prefix}${year}`,
+    const prefix = departmentPrefixes[department];
+    const year = new Date().getFullYear().toString().slice(-2);
+
+    // Get the last employee ID for this department and year
+    const lastEmployee = await prisma.hiredEmployee.findFirst({
+      where: {
+        employeeId: {
+          startsWith: `${prefix}${year}`,
+        },
       },
-    },
-    orderBy: {
-      employeeId: "desc",
-    },
-  });
+      orderBy: {
+        employeeId: "desc",
+      },
+    });
 
-  let nextNumber = 1;
-  if (lastEmployee) {
-    const lastNumber = parseInt(lastEmployee.employeeId.slice(-4));
-    nextNumber = lastNumber + 1;
+    let nextNumber = 1;
+    if (lastEmployee) {
+      const lastNumber = parseInt(lastEmployee.employeeId.slice(-4));
+      nextNumber = lastNumber + 1;
+    }
+
+    return `${prefix}${year}${nextNumber.toString().padStart(4, "0")}`;
   }
-
-  return `${prefix}${year}${nextNumber.toString().padStart(4, "0")}`;
-}
 
   // MIGRATION FUNCTION: Migrate HIRED status to HiredEmployee table
   async migrateToHiredEmployee(req: AuthenticatedRequest, res: Response) {
@@ -166,7 +167,8 @@ export class RecruitmentFormController {
       // Check if user is HR or ADMIN
       if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
         return res.status(403).json({
-          message: "Access denied. Only HR or ADMIN can migrate hired employees",
+          message:
+            "Access denied. Only HR or ADMIN can migrate hired employees",
         });
       }
 
@@ -190,7 +192,8 @@ export class RecruitmentFormController {
       // Validate required fields
       if (!recruitmentFormId || !hiredPosition || !department || !startDate) {
         return res.status(400).json({
-          message: "Recruitment form ID, hired position, department, and start date are required",
+          message:
+            "Recruitment form ID, hired position, department, and start date are required",
         });
       }
 
@@ -208,7 +211,8 @@ export class RecruitmentFormController {
 
       if (recruitmentForm.status !== RecruitmentStatus.HIRED) {
         return res.status(400).json({
-          message: "Only candidates with HIRED status can be migrated to employees",
+          message:
+            "Only candidates with HIRED status can be migrated to employees",
         });
       }
 
@@ -338,7 +342,8 @@ export class RecruitmentFormController {
       // Check if user is HR or ADMIN
       if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
         return res.status(403).json({
-          message: "Access denied. Only HR or ADMIN can view candidates ready for hiring",
+          message:
+            "Access denied. Only HR or ADMIN can view candidates ready for hiring",
         });
       }
 
@@ -552,405 +557,418 @@ export class RecruitmentFormController {
   }
 
   // Get all recruitment forms with pagination and filtering
-async getRecruitmentForms(req: AuthenticatedRequest, res: Response) {
-  try {
-    // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
-      return res.status(403).json({
-        message: "Access denied. Only HR or ADMIN can view recruitment forms",
-      });
-    }
+  async getRecruitmentForms(req: AuthenticatedRequest, res: Response) {
+    try {
+      // Check if user is HR or ADMIN
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+        return res.status(403).json({
+          message: "Access denied. Only HR or ADMIN can view recruitment forms",
+        });
+      }
 
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
-    const search = req.query.search as string;
-    const status = req.query.status as string;
-    const province = req.query.province as string;
-    const education = req.query.education as string;
-    const position = req.query.appliedPosition as string;
-    const certificate = req.query.certificate as string;
-    const startDate = req.query.startDate as string;
-    const endDate = req.query.endDate as string;
-    const skip = (page - 1) * limit;
+      const page = parseInt(req.query.page as string) || 1;
+      const limit = Math.min(parseInt(req.query.limit as string) || 10, 50);
+      const search = req.query.search as string;
+      const status = req.query.status as string;
+      const province = req.query.province as string;
+      const gender = req.query.gender as string;
+      const education = req.query.education as string;
+      const position = req.query.appliedPosition as string;
+      const certificate = req.query.certificate as string;
+      const startDate = req.query.startDate as string;
+      const endDate = req.query.endDate as string;
+      const skip = (page - 1) * limit;
 
-    // Build where clause for filtering
-    const whereClause: any = {};
+      // Build where clause for filtering
+      const whereClause: any = {};
 
-    if (search) {
-      whereClause.OR = [
-        { fullName: { contains: search, mode: "insensitive" } },
-        { whatsappNumber: { contains: search } },
-        { address: { contains: search, mode: "insensitive" } },
-      ];
-    }
-    if (startDate) {
-      whereClause.createdAt = {
-        ...whereClause.createdAt,
-        gte: new Date(startDate),
-      };
-    }
-
-    if (endDate) {
-      whereClause.createdAt = {
-        ...whereClause.createdAt,
-        lte: new Date(endDate),
-      };
-    }
-    if (position && Object.values(Position).includes(position as Position)) {
-      whereClause.appliedPosition = position;
-    }
-    if (certificate) {
-      // Handle both single certificate and multiple certificates (comma-separated)
-      const certificateArray = certificate
-        .split(",")
-        .filter((cert) => cert.trim());
-
-      // Validate all certificates
-      const validCertificates = certificateArray.filter((cert) =>
-        Object.values(Certificate).includes(cert.trim() as Certificate)
-      );
-
-      if (validCertificates.length > 0) {
-        whereClause.certificate = {
-          hasSome: validCertificates as Certificate[],
+      if (search) {
+        whereClause.OR = [
+          { fullName: { contains: search, mode: "insensitive" } },
+          { whatsappNumber: { contains: search } },
+          { address: { contains: search, mode: "insensitive" } },
+        ];
+      }
+      if (startDate) {
+        whereClause.createdAt = {
+          ...whereClause.createdAt,
+          gte: new Date(startDate),
         };
       }
-    }
-    if (
-      status &&
-      Object.values(RecruitmentStatus).includes(status as RecruitmentStatus)
-    ) {
-      whereClause.status = status;
-    }
 
-    if (province && Object.values(Province).includes(province as Province)) {
-      whereClause.province = province;
-    }
+      if (endDate) {
+        whereClause.createdAt = {
+          ...whereClause.createdAt,
+          lte: new Date(endDate),
+        };
+      }
+      if (position && Object.values(Position).includes(position as Position)) {
+        whereClause.appliedPosition = position;
+      }
+      if (certificate) {
+        // Handle both single certificate and multiple certificates (comma-separated)
+        const certificateArray = certificate
+          .split(",")
+          .filter((cert) => cert.trim());
 
-    if (
-      education &&
-      Object.values(EducationLevel).includes(education as EducationLevel)
-    ) {
-      whereClause.education = education;
-    }
+        // Validate all certificates
+        const validCertificates = certificateArray.filter((cert) =>
+          Object.values(Certificate).includes(cert.trim() as Certificate)
+        );
 
-    // Get recruitment forms with pagination and filtering
-    const [recruitmentForms, total] = await Promise.all([
-      prisma.recruitmentForm.findMany({
-        where: whereClause,
-        skip,
-        take: limit,
-        orderBy: { createdAt: "desc" },
+        if (validCertificates.length > 0) {
+          whereClause.certificate = {
+            hasSome: validCertificates as Certificate[],
+          };
+        }
+      }
+      if (
+        status &&
+        Object.values(RecruitmentStatus).includes(status as RecruitmentStatus)
+      ) {
+        whereClause.status = status;
+      }
+
+      if (province && Object.values(Province).includes(province as Province)) {
+        whereClause.province = province;
+      }
+      if (gender && Object.values(Gender).includes(gender as Gender)) {
+        whereClause.gender = gender;
+      }
+      if (
+        education &&
+        Object.values(EducationLevel).includes(education as EducationLevel)
+      ) {
+        whereClause.education = education;
+      }
+      if (gender && Object.values(Gender).includes(gender as Gender)) {
+        whereClause.gender = gender;
+      }
+
+      // Get recruitment forms with pagination and filtering
+      const [recruitmentForms, total] = await Promise.all([
+        prisma.recruitmentForm.findMany({
+          where: whereClause,
+          skip,
+          take: limit,
+          orderBy: { createdAt: "desc" },
+          include: {
+            statusUpdatedBy: {
+              // Include user who last updated status
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+              },
+            },
+          },
+        }),
+        prisma.recruitmentForm.count({
+          where: whereClause,
+        }),
+      ]);
+
+      return res.status(200).json({
+        message: "Recruitment forms retrieved successfully",
+        recruitmentForms,
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNextPage: page < Math.ceil(total / limit),
+          hasPrevPage: page > 1,
+        },
+      });
+    } catch (error) {
+      console.error("Error getting recruitment forms:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  }
+
+  // Get single recruitment form by ID
+  async getRecruitmentFormById(req: AuthenticatedRequest, res: Response) {
+    try {
+      // Check if user is HR or ADMIN
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+        return res.status(403).json({
+          message: "Access denied. Only HR or ADMIN can view recruitment forms",
+        });
+      }
+
+      const { id } = req.params;
+
+      const recruitmentForm = await prisma.recruitmentForm.findUnique({
+        where: { id },
         include: {
-          statusUpdatedBy: {          // Include user who last updated status
+          statusUpdatedBy: {
+            // ADD THIS - Include user who last updated status
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
-      }),
-      prisma.recruitmentForm.count({
-        where: whereClause,
-      }),
-    ]);
-
-    return res.status(200).json({
-      message: "Recruitment forms retrieved successfully",
-      recruitmentForms,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page < Math.ceil(total / limit),
-        hasPrevPage: page > 1,
-      },
-    });
-  } catch (error) {
-    console.error("Error getting recruitment forms:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-}
-
-  // Get single recruitment form by ID
-async getRecruitmentFormById(req: AuthenticatedRequest, res: Response) {
-  try {
-    // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
-      return res.status(403).json({
-        message: "Access denied. Only HR or ADMIN can view recruitment forms",
-      });
-    }
-
-    const { id } = req.params;
-
-    const recruitmentForm = await prisma.recruitmentForm.findUnique({
-      where: { id },
-      include: {
-        statusUpdatedBy: {          // ADD THIS - Include user who last updated status
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
-        hiredEmployee: {
-          select: {
-            employeeId: true,
-            department: true,
-            startDate: true,
-            employmentStatus: true,
+              role: true,
+            },
+          },
+          hiredEmployee: {
+            select: {
+              employeeId: true,
+              department: true,
+              startDate: true,
+              employmentStatus: true,
+            },
           },
         },
-      },
-    });
-
-    if (!recruitmentForm) {
-      return res.status(404).json({
-        message: "Recruitment form not found",
       });
-    }
 
-    return res.status(200).json({
-      message: "Recruitment form retrieved successfully",
-      recruitmentForm,
-    });
-  } catch (error) {
-    console.error("Error getting recruitment form:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
-  }
-}
-
-async updateRecruitmentForm(req: AuthenticatedRequest, res: Response) {
-  try {
-    // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
-      return res.status(403).json({
-        message:
-          "Access denied. Only HR or ADMIN can update recruitment forms",
-      });
-    }
-
-    const { id } = req.params;
-    const updateData = req.body;
-
-    // Check if recruitment form exists
-    const existingForm = await prisma.recruitmentForm.findUnique({
-      where: { id },
-      include: { hiredEmployee: true },
-    });
-
-    if (!existingForm) {
-      return res.status(404).json({
-        message: "Recruitment form not found",
-      });
-    }
-
-    // Prevent updating if already migrated to hired employee
-    if (existingForm.hiredEmployee && updateData.status !== RecruitmentStatus.HIRED) {
-      return res.status(400).json({
-        message: "Cannot update recruitment form that has been migrated to hired employee",
-      });
-    }
-
-    // Validate enum fields if being updated
-    if (
-      updateData.province &&
-      !Object.values(Province).includes(updateData.province)
-    ) {
-      return res.status(400).json({ message: "Invalid province" });
-    }
-    if (
-      updateData.shirtSize &&
-      !Object.values(ShirtSize).includes(updateData.shirtSize)
-    ) {
-      return res.status(400).json({ message: "Invalid shirt size" });
-    }
-    if (
-      updateData.safetyShoesSize &&
-      !Object.values(SafetyShoesSize).includes(updateData.safetyShoesSize)
-    ) {
-      return res.status(400).json({ message: "Invalid safety shoes size" });
-    }
-    if (
-      updateData.pantsSize &&
-      !Object.values(PantsSize).includes(updateData.pantsSize)
-    ) {
-      return res.status(400).json({ message: "Invalid pants size" });
-    }
-    if (
-      updateData.education &&
-      !Object.values(EducationLevel).includes(updateData.education)
-    ) {
-      return res.status(400).json({ message: "Invalid education level" });
-    }
-    if (
-      updateData.maritalStatus &&
-      !Object.values(MaritalStatus).includes(updateData.maritalStatus)
-    ) {
-      return res.status(400).json({ message: "Invalid marital status" });
-    }
-    if (
-      updateData.status &&
-      !Object.values(RecruitmentStatus).includes(updateData.status)
-    ) {
-      return res.status(400).json({ message: "Invalid status" });
-    }
-    if (
-      updateData.appliedPosition &&
-      !Object.values(Position).includes(updateData.appliedPosition)
-    ) {
-      return res.status(400).json({ message: "Invalid applied position" });
-    }
-
-    // Process certificate array if provided
-    if (updateData.certificate) {
-      let certificateArray: Certificate[];
-      if (Array.isArray(updateData.certificate)) {
-        certificateArray = updateData.certificate;
-      } else {
-        certificateArray = [updateData.certificate];
+      if (!recruitmentForm) {
+        return res.status(404).json({
+          message: "Recruitment form not found",
+        });
       }
 
-      for (const cert of certificateArray) {
-        if (!Object.values(Certificate).includes(cert)) {
+      return res.status(200).json({
+        message: "Recruitment form retrieved successfully",
+        recruitmentForm,
+      });
+    } catch (error) {
+      console.error("Error getting recruitment form:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
+  }
+
+  async updateRecruitmentForm(req: AuthenticatedRequest, res: Response) {
+    try {
+      // Check if user is HR or ADMIN
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access denied. Only HR or ADMIN can update recruitment forms",
+        });
+      }
+
+      const { id } = req.params;
+      const updateData = req.body;
+
+      // Check if recruitment form exists
+      const existingForm = await prisma.recruitmentForm.findUnique({
+        where: { id },
+        include: { hiredEmployee: true },
+      });
+
+      if (!existingForm) {
+        return res.status(404).json({
+          message: "Recruitment form not found",
+        });
+      }
+
+      // Prevent updating if already migrated to hired employee
+      if (
+        existingForm.hiredEmployee &&
+        updateData.status !== RecruitmentStatus.HIRED
+      ) {
+        return res.status(400).json({
+          message:
+            "Cannot update recruitment form that has been migrated to hired employee",
+        });
+      }
+
+      // Validate enum fields if being updated
+      if (
+        updateData.province &&
+        !Object.values(Province).includes(updateData.province)
+      ) {
+        return res.status(400).json({ message: "Invalid province" });
+      }
+      if (
+        updateData.shirtSize &&
+        !Object.values(ShirtSize).includes(updateData.shirtSize)
+      ) {
+        return res.status(400).json({ message: "Invalid shirt size" });
+      }
+      if (
+        updateData.safetyShoesSize &&
+        !Object.values(SafetyShoesSize).includes(updateData.safetyShoesSize)
+      ) {
+        return res.status(400).json({ message: "Invalid safety shoes size" });
+      }
+      if (
+        updateData.pantsSize &&
+        !Object.values(PantsSize).includes(updateData.pantsSize)
+      ) {
+        return res.status(400).json({ message: "Invalid pants size" });
+      }
+      if (
+        updateData.education &&
+        !Object.values(EducationLevel).includes(updateData.education)
+      ) {
+        return res.status(400).json({ message: "Invalid education level" });
+      }
+      if (
+        updateData.maritalStatus &&
+        !Object.values(MaritalStatus).includes(updateData.maritalStatus)
+      ) {
+        return res.status(400).json({ message: "Invalid marital status" });
+      }
+      if (
+        updateData.status &&
+        !Object.values(RecruitmentStatus).includes(updateData.status)
+      ) {
+        return res.status(400).json({ message: "Invalid status" });
+      }
+      if (
+        updateData.appliedPosition &&
+        !Object.values(Position).includes(updateData.appliedPosition)
+      ) {
+        return res.status(400).json({ message: "Invalid applied position" });
+      }
+
+      // Process certificate array if provided
+      if (updateData.certificate) {
+        let certificateArray: Certificate[];
+        if (Array.isArray(updateData.certificate)) {
+          certificateArray = updateData.certificate;
+        } else {
+          certificateArray = [updateData.certificate];
+        }
+
+        for (const cert of certificateArray) {
+          if (!Object.values(Certificate).includes(cert)) {
+            return res
+              .status(400)
+              .json({ message: `Invalid certificate: ${cert}` });
+          }
+        }
+        updateData.certificate = certificateArray;
+      }
+
+      // Validate numeric fields if being updated
+      if (updateData.heightCm) {
+        const height = parseInt(updateData.heightCm);
+        if (isNaN(height) || height < 100 || height > 250) {
           return res
             .status(400)
-            .json({ message: `Invalid certificate: ${cert}` });
+            .json({ message: "Height must be between 100-250 cm" });
         }
+        updateData.heightCm = height;
       }
-      updateData.certificate = certificateArray;
-    }
-
-    // Validate numeric fields if being updated
-    if (updateData.heightCm) {
-      const height = parseInt(updateData.heightCm);
-      if (isNaN(height) || height < 100 || height > 250) {
-        return res
-          .status(400)
-          .json({ message: "Height must be between 100-250 cm" });
+      if (updateData.weightKg) {
+        const weight = parseInt(updateData.weightKg);
+        if (isNaN(weight) || weight < 30 || weight > 200) {
+          return res
+            .status(400)
+            .json({ message: "Weight must be between 30-200 kg" });
+        }
+        updateData.weightKg = weight;
       }
-      updateData.heightCm = height;
-    }
-    if (updateData.weightKg) {
-      const weight = parseInt(updateData.weightKg);
-      if (isNaN(weight) || weight < 30 || weight > 200) {
-        return res
-          .status(400)
-          .json({ message: "Weight must be between 30-200 kg" });
+
+      // Handle birth date if being updated
+      if (updateData.birthDate) {
+        updateData.birthDate = new Date(updateData.birthDate);
       }
-      updateData.weightKg = weight;
-    }
 
-    // Handle birth date if being updated
-    if (updateData.birthDate) {
-      updateData.birthDate = new Date(updateData.birthDate);
-    }
-
-    // Trim string fields
-    const stringFields = [
-      "fullName",
-      "birthPlace",
-      "address",
-      "whatsappNumber",
-      "schoolName",
-      "workExperience",
-    ];
-    stringFields.forEach((field) => {
-      if (updateData[field]) {
-        updateData[field] = updateData[field].trim();
-      }
-    });
-
-    // Handle file uploads (replace existing files)
-    const files = req.files as { [fieldname: string]: Express.Multer.File[] };
-    if (files) {
-      // Delete old files from Cloudinary before updating
-      const oldFileFields = [
-        { field: "documentPhotoUrl", uploadField: "documentPhoto" },
-        { field: "documentCvUrl", uploadField: "documentCv" },
-        { field: "documentKtpUrl", uploadField: "documentKtp" },
-        { field: "documentSkckUrl", uploadField: "documentSkck" },
-        { field: "documentVaccineUrl", uploadField: "documentVaccine" },
-        { field: "supportingDocsUrl", uploadField: "supportingDocs" },
+      // Trim string fields
+      const stringFields = [
+        "fullName",
+        "birthPlace",
+        "address",
+        "whatsappNumber",
+        "schoolName",
+        "workExperience",
       ];
-
-      for (const { field, uploadField } of oldFileFields) {
-        if (
-          files[uploadField] &&
-          existingForm[field as keyof typeof existingForm]
-        ) {
-          const oldUrl = existingForm[
-            field as keyof typeof existingForm
-          ] as string;
-          await this.deleteOldFile(oldUrl, uploadField);
+      stringFields.forEach((field) => {
+        if (updateData[field]) {
+          updateData[field] = updateData[field].trim();
         }
+      });
+
+      // Handle file uploads (replace existing files)
+      const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+      if (files) {
+        // Delete old files from Cloudinary before updating
+        const oldFileFields = [
+          { field: "documentPhotoUrl", uploadField: "documentPhoto" },
+          { field: "documentCvUrl", uploadField: "documentCv" },
+          { field: "documentKtpUrl", uploadField: "documentKtp" },
+          { field: "documentSkckUrl", uploadField: "documentSkck" },
+          { field: "documentVaccineUrl", uploadField: "documentVaccine" },
+          { field: "supportingDocsUrl", uploadField: "supportingDocs" },
+        ];
+
+        for (const { field, uploadField } of oldFileFields) {
+          if (
+            files[uploadField] &&
+            existingForm[field as keyof typeof existingForm]
+          ) {
+            const oldUrl = existingForm[
+              field as keyof typeof existingForm
+            ] as string;
+            await this.deleteOldFile(oldUrl, uploadField);
+          }
+        }
+
+        // Set new file URLs
+        if (files.documentPhoto)
+          updateData.documentPhotoUrl = files.documentPhoto[0].path;
+        if (files.documentCv)
+          updateData.documentCvUrl = files.documentCv[0].path;
+        if (files.documentKtp)
+          updateData.documentKtpUrl = files.documentKtp[0].path;
+        if (files.documentSkck)
+          updateData.documentSkckUrl = files.documentSkck[0].path;
+        if (files.documentVaccine)
+          updateData.documentVaccineUrl = files.documentVaccine[0].path;
+        if (files.supportingDocs)
+          updateData.supportingDocsUrl = files.supportingDocs[0].path;
       }
 
-      // Set new file URLs
-      if (files.documentPhoto)
-        updateData.documentPhotoUrl = files.documentPhoto[0].path;
-      if (files.documentCv)
-        updateData.documentCvUrl = files.documentCv[0].path;
-      if (files.documentKtp)
-        updateData.documentKtpUrl = files.documentKtp[0].path;
-      if (files.documentSkck)
-        updateData.documentSkckUrl = files.documentSkck[0].path;
-      if (files.documentVaccine)
-        updateData.documentVaccineUrl = files.documentVaccine[0].path;
-      if (files.supportingDocs)
-        updateData.supportingDocsUrl = files.supportingDocs[0].path;
-    }
+      // ADD STATUS TRACKING - If status is being updated, track who updated it
+      if (updateData.status && updateData.status !== existingForm.status) {
+        updateData.statusUpdatedById = req.user.id;
+        updateData.statusUpdatedAt = new Date();
+      }
 
-    // ADD STATUS TRACKING - If status is being updated, track who updated it
-    if (updateData.status && updateData.status !== existingForm.status) {
-      updateData.statusUpdatedById = req.user.id;
-      updateData.statusUpdatedAt = new Date();
-    }
-
-    // Update recruitment form
-    const updatedForm = await prisma.recruitmentForm.update({
-      where: { id },
-      data: updateData,
-      include: {                          // ADD THIS - Include relations in response
-        statusUpdatedBy: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
-        },
-        hiredEmployee: {
-          select: {
-            employeeId: true,
-            department: true,
-            startDate: true,
-            employmentStatus: true,
+      // Update recruitment form
+      const updatedForm = await prisma.recruitmentForm.update({
+        where: { id },
+        data: updateData,
+        include: {
+          // ADD THIS - Include relations in response
+          statusUpdatedBy: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          hiredEmployee: {
+            select: {
+              employeeId: true,
+              department: true,
+              startDate: true,
+              employmentStatus: true,
+            },
           },
         },
-      },
-    });
+      });
 
-    return res.status(200).json({
-      message: "Recruitment form updated successfully",
-      recruitmentForm: updatedForm,
-    });
-  } catch (error: any) {
-    console.error("Error updating recruitment form:", error);
-    return res.status(500).json({
-      message: "Internal server error",
-    });
+      return res.status(200).json({
+        message: "Recruitment form updated successfully",
+        recruitmentForm: updatedForm,
+      });
+    } catch (error: any) {
+      console.error("Error updating recruitment form:", error);
+      return res.status(500).json({
+        message: "Internal server error",
+      });
+    }
   }
-}
   // Delete recruitment form
   async deleteRecruitmentForm(req: AuthenticatedRequest, res: Response) {
     try {
@@ -1075,60 +1093,61 @@ async updateRecruitmentForm(req: AuthenticatedRequest, res: Response) {
 
   // Update recruitment status
   async updateRecruitmentStatus(req: AuthenticatedRequest, res: Response) {
-  try {
-    // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
-      return res.status(403).json({
-        message:
-          "Access denied. Only HR or ADMIN can update recruitment status",
-      });
-    }
+    try {
+      // Check if user is HR or ADMIN
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+        return res.status(403).json({
+          message:
+            "Access denied. Only HR or ADMIN can update recruitment status",
+        });
+      }
 
-    const { id } = req.params;
-    const { status } = req.body;
+      const { id } = req.params;
+      const { status } = req.body;
 
-    if (!status || !Object.values(RecruitmentStatus).includes(status)) {
-      return res.status(400).json({
-        message: "Valid status is required",
-      });
-    }
+      if (!status || !Object.values(RecruitmentStatus).includes(status)) {
+        return res.status(400).json({
+          message: "Valid status is required",
+        });
+      }
 
-    const updatedForm = await prisma.recruitmentForm.update({
-      where: { id },
-      data: { 
-        status,
-        statusUpdatedById: req.user.id,      // Track who updated the status
-        statusUpdatedAt: new Date()          // Track when status was updated
-      },
-      select: {
-        id: true,
-        fullName: true,
-        status: true,
-        statusUpdatedBy: {                   // Include user info who updated
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            role: true
-          }
+      const updatedForm = await prisma.recruitmentForm.update({
+        where: { id },
+        data: {
+          status,
+          statusUpdatedById: req.user.id, // Track who updated the status
+          statusUpdatedAt: new Date(), // Track when status was updated
         },
-        statusUpdatedAt: true,               // Include when it was updated
-        updatedAt: true,
-      },
-    });
+        select: {
+          id: true,
+          fullName: true,
+          status: true,
+          statusUpdatedBy: {
+            // Include user info who updated
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              role: true,
+            },
+          },
+          statusUpdatedAt: true, // Include when it was updated
+          updatedAt: true,
+        },
+      });
 
-    return res.status(200).json({
-      message: "Recruitment status updated successfully",
-      recruitmentForm: updatedForm,
-    });
-  } catch (error: any) {
-    console.error("Error updating recruitment status:", error);
-    if (error.code === "P2025") {
-      return res.status(404).json({ message: "Recruitment form not found" });
+      return res.status(200).json({
+        message: "Recruitment status updated successfully",
+        recruitmentForm: updatedForm,
+      });
+    } catch (error: any) {
+      console.error("Error updating recruitment status:", error);
+      if (error.code === "P2025") {
+        return res.status(404).json({ message: "Recruitment form not found" });
+      }
+      return res.status(500).json({
+        message: "Internal server error",
+      });
     }
-    return res.status(500).json({
-      message: "Internal server error",
-    });
   }
-}
 }

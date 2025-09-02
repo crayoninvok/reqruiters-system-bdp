@@ -414,6 +414,7 @@ class RecruitmentFormController {
             const search = req.query.search;
             const status = req.query.status;
             const province = req.query.province;
+            const gender = req.query.gender;
             const education = req.query.education;
             const position = req.query.appliedPosition;
             const certificate = req.query.certificate;
@@ -461,9 +462,15 @@ class RecruitmentFormController {
             if (province && Object.values(client_1.Province).includes(province)) {
                 whereClause.province = province;
             }
+            if (gender && Object.values(client_1.Gender).includes(gender)) {
+                whereClause.gender = gender;
+            }
             if (education &&
                 Object.values(client_1.EducationLevel).includes(education)) {
                 whereClause.education = education;
+            }
+            if (gender && Object.values(client_1.Gender).includes(gender)) {
+                whereClause.gender = gender;
             }
             const [recruitmentForms, total] = await Promise.all([
                 prisma.recruitmentForm.findMany({
@@ -477,10 +484,10 @@ class RecruitmentFormController {
                                 id: true,
                                 name: true,
                                 email: true,
-                                role: true
-                            }
-                        }
-                    }
+                                role: true,
+                            },
+                        },
+                    },
                 }),
                 prisma.recruitmentForm.count({
                     where: whereClause,
@@ -522,8 +529,8 @@ class RecruitmentFormController {
                             id: true,
                             name: true,
                             email: true,
-                            role: true
-                        }
+                            role: true,
+                        },
                     },
                     hiredEmployee: {
                         select: {
@@ -570,7 +577,8 @@ class RecruitmentFormController {
                     message: "Recruitment form not found",
                 });
             }
-            if (existingForm.hiredEmployee && updateData.status !== client_1.RecruitmentStatus.HIRED) {
+            if (existingForm.hiredEmployee &&
+                updateData.status !== client_1.RecruitmentStatus.HIRED) {
                 return res.status(400).json({
                     message: "Cannot update recruitment form that has been migrated to hired employee",
                 });
@@ -701,8 +709,8 @@ class RecruitmentFormController {
                             id: true,
                             name: true,
                             email: true,
-                            role: true
-                        }
+                            role: true,
+                        },
                     },
                     hiredEmployee: {
                         select: {
@@ -835,7 +843,7 @@ class RecruitmentFormController {
                 data: {
                     status,
                     statusUpdatedById: req.user.id,
-                    statusUpdatedAt: new Date()
+                    statusUpdatedAt: new Date(),
                 },
                 select: {
                     id: true,
@@ -846,8 +854,8 @@ class RecruitmentFormController {
                             id: true,
                             name: true,
                             email: true,
-                            role: true
-                        }
+                            role: true,
+                        },
                     },
                     statusUpdatedAt: true,
                     updatedAt: true,
