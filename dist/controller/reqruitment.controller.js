@@ -404,7 +404,7 @@ class RecruitmentFormController {
     }
     async getRecruitmentForms(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user?.role !== "MANAGEMENT")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view recruitment forms",
                 });
@@ -515,7 +515,7 @@ class RecruitmentFormController {
     }
     async getRecruitmentFormById(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view recruitment forms",
                 });
@@ -767,7 +767,7 @@ class RecruitmentFormController {
     }
     async getRecruitmentStats(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view recruitment statistics",
                 });

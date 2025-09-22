@@ -129,6 +129,8 @@ model HiredEmployee {
 enum Role {
   ADMIN
   HR
+  MANAGEMENT
+  VIEWS_ONLY
 }
 
 enum Position {
@@ -184,6 +186,8 @@ enum Position {
   HRGA_OFFICER //updated on 2025-09-02
   DRIVER_SARANA //updated on 2025-09-02
   DRIVER_LV //updated on 2025-09-02
+  DEPT_HEAD_HSE //updated on 2025-09-09 PUSHED
+  PROCUREMENT_OFFICER //updated on 2025-09-22 PUSHED
 }
 
 enum Department {

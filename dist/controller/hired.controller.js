@@ -6,7 +6,7 @@ const prisma = new client_1.PrismaClient();
 class HiredEmployeeController {
     async getHiredEmployees(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view hired employees",
                 });
@@ -233,7 +233,7 @@ class HiredEmployeeController {
     }
     async getHiredEmployeeById(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view hired employee details",
                 });
@@ -392,7 +392,7 @@ class HiredEmployeeController {
     }
     async getAvailableSupervisors(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can view supervisors",
                 });
@@ -446,7 +446,7 @@ class HiredEmployeeController {
     }
     async updateHiredEmployee(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can update hired employees",
                 });
@@ -585,7 +585,7 @@ class HiredEmployeeController {
     }
     async deleteHiredEmployee(req, res) {
         try {
-            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+            if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT")) {
                 return res.status(403).json({
                     message: "Access denied. Only HR or ADMIN can delete hired employees",
                 });

@@ -42,7 +42,7 @@ export class HiredEmployeeController {
   async getHiredEmployees(req: AuthenticatedRequest, res: Response) {
     try {
       // Check if user is HR or ADMIN
-      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !=="VIEWS_ONLY")) {
         return res.status(403).json({
           message: "Access denied. Only HR or ADMIN can view hired employees",
         });
@@ -315,7 +315,7 @@ export class HiredEmployeeController {
   // Get single hired employee by ID
   async getHiredEmployeeById(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
         return res.status(403).json({
           message: "Access denied. Only HR or ADMIN can view hired employee details",
         });
@@ -509,7 +509,7 @@ export class HiredEmployeeController {
   // Get available supervisors for dropdown/selection
   async getAvailableSupervisors(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+      if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT" && req.user.role !== "VIEWS_ONLY")) {
         return res.status(403).json({
           message: "Access denied. Only HR or ADMIN can view supervisors",
         });
@@ -572,7 +572,7 @@ export class HiredEmployeeController {
 async updateHiredEmployee(req: AuthenticatedRequest, res: Response) {
   try {
     // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT")) {
       return res.status(403).json({
         message: "Access denied. Only HR or ADMIN can update hired employees",
       });
@@ -734,11 +734,11 @@ async updateHiredEmployee(req: AuthenticatedRequest, res: Response) {
   }
 }
 
-// Soft delete hired employee (set inactive)
+// Soft delete hired employee (set inactive) add the management role
 async deleteHiredEmployee(req: AuthenticatedRequest, res: Response) {
   try {
     // Check if user is HR or ADMIN
-    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN")) {
+    if (!req.user || (req.user.role !== "HR" && req.user.role !== "ADMIN" && req.user.role !== "MANAGEMENT")) {
       return res.status(403).json({
         message: "Access denied. Only HR or ADMIN can delete hired employees",
       });
