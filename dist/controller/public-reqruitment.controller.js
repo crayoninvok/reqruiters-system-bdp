@@ -42,7 +42,7 @@ class PublicRecruitmentController {
             console.log('=== START RECRUITMENT FORM SUBMISSION ===');
             console.log('Request body:', JSON.stringify(req.body, null, 2));
             console.log('Files received:', req.files ? Object.keys(req.files) : 'No files');
-            const { fullName, birthPlace, birthDate, gender, ktp, kk, npwp, province, religion, heightCm, weightKg, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
+            const { fullName, birthPlace, birthDate, gender, ktp, kk, npwp, province, religion, heightCm, weightKg, shirtSize, safetyShoesSize, expectedSalary, pernahKerjaDiTambang, reffEmployeeName, reffConnection, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", } = req.body;
             console.log('Step 1: Basic field validation');
             if (!fullName ||
                 !birthPlace ||
@@ -50,6 +50,8 @@ class PublicRecruitmentController {
                 !ktp ||
                 !kk ||
                 !birthDate ||
+                !expectedSalary ||
+                !pernahKerjaDiTambang ||
                 !province ||
                 !religion ||
                 !heightCm ||
@@ -81,6 +83,8 @@ class PublicRecruitmentController {
                         weightKg: !weightKg,
                         shirtSize: !shirtSize,
                         safetyShoesSize: !safetyShoesSize,
+                        expectedSalary: !expectedSalary,
+                        pernahKerjaDiTambang: !pernahKerjaDiTambang,
                         pantsSize: !pantsSize,
                         address: !address,
                         whatsappNumber: !whatsappNumber,
@@ -334,12 +338,16 @@ class PublicRecruitmentController {
                         ktp: ktp.trim(),
                         kk: kk.trim(),
                         npwp: npwp?.trim() || null,
+                        reffEmployeeName: reffEmployeeName?.trim() || null,
+                        reffConnection: reffConnection?.trim() || null,
                         religion,
                         province,
                         heightCm: height,
                         weightKg: weight,
                         shirtSize,
                         safetyShoesSize,
+                        expectedSalary: parseFloat(expectedSalary),
+                        pernahKerjaDiTambang,
                         pantsSize,
                         address: address.trim(),
                         whatsappNumber: normalizedWhatsapp,
@@ -525,7 +533,7 @@ class PublicRecruitmentController {
         try {
             console.log('=== START RECRUITMENT FORM SUBMISSION WITH URLS ===');
             console.log('Request body:', JSON.stringify(req.body, null, 2));
-            const { fullName, birthPlace, birthDate, province, religion, heightCm, weightKg, gender, ktp, kk, npwp, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl, } = req.body;
+            const { fullName, birthPlace, birthDate, province, religion, heightCm, weightKg, gender, ktp, kk, npwp, reffEmployeeName, reffConnection, shirtSize, safetyShoesSize, pantsSize, address, whatsappNumber, certificate, education, schoolName, jurusan, workExperience, expectedSalary, pernahKerjaDiTambang, maritalStatus, appliedPosition, experienceLevel = "FRESH_GRADUATED", documentPhotoUrl, documentCvUrl, documentKtpUrl, documentSkckUrl, documentVaccineUrl, supportingDocsUrl, } = req.body;
             console.log('Step 1: Basic field validation');
             if (!fullName ||
                 !birthPlace ||
@@ -543,6 +551,8 @@ class PublicRecruitmentController {
                 !address ||
                 !whatsappNumber ||
                 !education ||
+                !expectedSalary ||
+                !pernahKerjaDiTambang ||
                 !schoolName ||
                 !maritalStatus ||
                 !appliedPosition ||
@@ -571,7 +581,8 @@ class PublicRecruitmentController {
                         schoolName: !schoolName,
                         maritalStatus: !maritalStatus,
                         appliedPosition: !appliedPosition,
-                        experienceLevel: !experienceLevel
+                        experienceLevel: !experienceLevel,
+                        pernahKerjaDiTambang: !pernahKerjaDiTambang,
                     }
                 });
             }
@@ -729,7 +740,8 @@ class PublicRecruitmentController {
                 { value: education, enum: client_1.EducationLevel, name: 'EducationLevel' },
                 { value: maritalStatus, enum: client_1.MaritalStatus, name: 'MaritalStatus' },
                 { value: appliedPosition, enum: client_1.Position, name: 'Position' },
-                { value: experienceLevel, enum: client_1.ExperienceLevel, name: 'ExperienceLevel' }
+                { value: experienceLevel, enum: client_1.ExperienceLevel, name: 'ExperienceLevel' },
+                { value: pernahKerjaDiTambang, enum: client_1.PernahTidak, name: 'PernahKerjaDiTambang' }
             ];
             for (const validation of enumValidations) {
                 if (!Object.values(validation.enum).includes(validation.value)) {
@@ -824,11 +836,15 @@ class PublicRecruitmentController {
                     ktp: ktp.trim(),
                     kk: kk.trim(),
                     npwp: npwp?.trim() || null,
+                    reffEmployeeName: reffEmployeeName?.trim() || null,
+                    reffConnection: reffConnection?.trim() || null,
                     religion,
                     heightCm: height,
                     weightKg: weight,
                     shirtSize,
                     safetyShoesSize,
+                    expectedSalary: parseFloat(expectedSalary),
+                    pernahKerjaDiTambang,
                     pantsSize,
                     address: address.trim(),
                     whatsappNumber: normalizedWhatsapp,

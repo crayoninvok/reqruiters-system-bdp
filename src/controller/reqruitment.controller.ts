@@ -17,6 +17,7 @@ import {
   EmploymentStatus,
   ContractType,
   ShiftPattern,
+  PernahTidak,
 } from "@prisma/client";
 import { upload, cloudinary } from "../services/cludinary";
 
@@ -573,6 +574,7 @@ export class RecruitmentFormController {
       const province = req.query.province as string;
       const gender = req.query.gender as string;
       const education = req.query.education as string;
+      const pernah = req.query.pernahKerjaDiTambang as string;
       const position = req.query.appliedPosition as string;
       const certificate = req.query.certificate as string;
       const startDate = req.query.startDate as string;
@@ -643,6 +645,9 @@ export class RecruitmentFormController {
       }
       if (gender && Object.values(Gender).includes(gender as Gender)) {
         whereClause.gender = gender;
+      }
+      if (pernah && Object.values(PernahTidak).includes(pernah as PernahTidak)) {
+        whereClause.pernahKerjaDiTambang = pernah;
       }
 
       // Get recruitment forms with pagination and filtering

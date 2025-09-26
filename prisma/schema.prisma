@@ -60,8 +60,11 @@ model RecruitmentForm {
   documentSkckUrl    String?
   documentVaccineUrl String?
   supportingDocsUrl  String?
-
   experienceLevel    ExperienceLevel?
+  expectedSalary     Decimal?          @db.Decimal(15,2) //Updated on 25-09-2025
+  reffEmployeeName   String?         // Added on 2025-09-25
+  reffConnection     String? // Added on 2025-09-25
+  pernahKerjaDiTambang PernahTidak? // Added on 2025-09-25
   
   // Status tracking fields
   statusUpdatedById  String?           // Track who last updated the status
@@ -201,6 +204,11 @@ enum Department {
   INFORMATION_TECHNOLOGY
   MEDICAL
   TRAINING_DEVELOPMENT
+}
+
+enum PernahTidak{ // Added on 2025-09-25
+  PERNAH // Added on 2025-09-25
+  TIDAK_PERNAH // Added on 2025-09-25
 }
 
 enum EmploymentStatus {

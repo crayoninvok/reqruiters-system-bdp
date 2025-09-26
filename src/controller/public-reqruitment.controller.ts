@@ -13,6 +13,7 @@ import {
   RecruitmentStatus,
   Position,
   ExperienceLevel,
+  PernahTidak,
 } from "@prisma/client";
 import { upload, cloudinary } from "../services/cludinary";
 
@@ -86,6 +87,10 @@ async submitRecruitmentForm(req: PublicRequest, res: Response) {
       weightKg,
       shirtSize,
       safetyShoesSize,
+      expectedSalary,
+      pernahKerjaDiTambang,
+      reffEmployeeName,
+      reffConnection,
       pantsSize,
       address,
       whatsappNumber,
@@ -97,6 +102,7 @@ async submitRecruitmentForm(req: PublicRequest, res: Response) {
       maritalStatus,
       appliedPosition,
       experienceLevel = "FRESH_GRADUATED",
+      
     } = req.body;
 
     // Step 1: Basic validation logging
@@ -108,6 +114,8 @@ async submitRecruitmentForm(req: PublicRequest, res: Response) {
       !ktp ||
       !kk ||
       !birthDate ||
+      !expectedSalary ||
+      !pernahKerjaDiTambang ||
       !province ||
       !religion ||
       !heightCm ||
@@ -140,6 +148,8 @@ async submitRecruitmentForm(req: PublicRequest, res: Response) {
           weightKg: !weightKg,
           shirtSize: !shirtSize,
           safetyShoesSize: !safetyShoesSize,
+          expectedSalary: !expectedSalary,
+          pernahKerjaDiTambang: !pernahKerjaDiTambang,
           pantsSize: !pantsSize,
           address: !address,
           whatsappNumber: !whatsappNumber,
@@ -432,12 +442,16 @@ async submitRecruitmentForm(req: PublicRequest, res: Response) {
           ktp: ktp.trim(),
           kk: kk.trim(),
           npwp: npwp?.trim() || null,
+          reffEmployeeName: reffEmployeeName?.trim() || null,
+          reffConnection: reffConnection?.trim() || null,
           religion,
           province,
           heightCm: height,
           weightKg: weight,
           shirtSize,
           safetyShoesSize,
+          expectedSalary: parseFloat(expectedSalary),
+          pernahKerjaDiTambang,
           pantsSize,
           address: address.trim(),
           whatsappNumber: normalizedWhatsapp,
@@ -673,6 +687,8 @@ async submitWithUrls(req: Request, res: Response) {
       ktp,
       kk,
       npwp,
+      reffEmployeeName,
+      reffConnection,
       shirtSize,
       safetyShoesSize,
       pantsSize,
@@ -683,6 +699,8 @@ async submitWithUrls(req: Request, res: Response) {
       schoolName,
       jurusan,
       workExperience,
+      expectedSalary,
+      pernahKerjaDiTambang,
       maritalStatus,
       appliedPosition,
       experienceLevel = "FRESH_GRADUATED",
@@ -714,6 +732,8 @@ async submitWithUrls(req: Request, res: Response) {
       !address ||
       !whatsappNumber ||
       !education ||
+      !expectedSalary ||
+      !pernahKerjaDiTambang ||
       !schoolName ||
       !maritalStatus ||
       !appliedPosition ||
@@ -743,7 +763,8 @@ async submitWithUrls(req: Request, res: Response) {
           schoolName: !schoolName,
           maritalStatus: !maritalStatus,
           appliedPosition: !appliedPosition,
-          experienceLevel: !experienceLevel
+          experienceLevel: !experienceLevel,
+          pernahKerjaDiTambang: !pernahKerjaDiTambang,
         }
       });
     }
@@ -927,7 +948,8 @@ async submitWithUrls(req: Request, res: Response) {
       { value: education, enum: EducationLevel, name: 'EducationLevel' },
       { value: maritalStatus, enum: MaritalStatus, name: 'MaritalStatus' },
       { value: appliedPosition, enum: Position, name: 'Position' },
-      { value: experienceLevel, enum: ExperienceLevel, name: 'ExperienceLevel' }
+      { value: experienceLevel, enum: ExperienceLevel, name: 'ExperienceLevel' }, 
+      { value: pernahKerjaDiTambang, enum: PernahTidak, name: 'PernahKerjaDiTambang' }
     ];
 
     for (const validation of enumValidations) {
@@ -1034,11 +1056,15 @@ async submitWithUrls(req: Request, res: Response) {
         ktp: ktp.trim(),
         kk: kk.trim(),
         npwp: npwp?.trim() || null,
+        reffEmployeeName: reffEmployeeName?.trim() || null,
+        reffConnection: reffConnection?.trim() || null,
         religion,
         heightCm: height,
         weightKg: weight,
         shirtSize,
         safetyShoesSize,
+        expectedSalary: parseFloat(expectedSalary),
+        pernahKerjaDiTambang,
         pantsSize,
         address: address.trim(),
         whatsappNumber: normalizedWhatsapp, // Use normalized WhatsApp

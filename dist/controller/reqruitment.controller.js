@@ -416,6 +416,7 @@ class RecruitmentFormController {
             const province = req.query.province;
             const gender = req.query.gender;
             const education = req.query.education;
+            const pernah = req.query.pernahKerjaDiTambang;
             const position = req.query.appliedPosition;
             const certificate = req.query.certificate;
             const startDate = req.query.startDate;
@@ -471,6 +472,9 @@ class RecruitmentFormController {
             }
             if (gender && Object.values(client_1.Gender).includes(gender)) {
                 whereClause.gender = gender;
+            }
+            if (pernah && Object.values(client_1.PernahTidak).includes(pernah)) {
+                whereClause.pernahKerjaDiTambang = pernah;
             }
             const [recruitmentForms, total] = await Promise.all([
                 prisma.recruitmentForm.findMany({
