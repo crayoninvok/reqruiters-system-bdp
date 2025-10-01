@@ -192,6 +192,9 @@ enum Position {
   DEPT_HEAD_HSE //updated on 2025-09-09 PUSHED
   PROCUREMENT_OFFICER //updated on 2025-09-22 PUSHED
   ERT_OFFICER //updated on 2025-01-10 PUSHED
+  PETUGAS_B3 //updated on 2025-01-10 PUSHED
+  TRAINER_K3 //updated on 2025-01-10 PUSHED
+  OPERATOR_GARBAGE_CAR //updated on 2025-01-10 PUSHED
 }
 
 enum Department {
