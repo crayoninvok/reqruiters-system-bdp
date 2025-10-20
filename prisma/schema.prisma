@@ -195,6 +195,7 @@ enum Position {
   PETUGAS_B3 //updated on 2025-01-10 PUSHED
   TRAINER_K3 //updated on 2025-01-10 PUSHED
   OPERATOR_GARBAGE_CAR //updated on 2025-01-10 PUSHED
+  SAFETY_PATROL // updated on 2025-20-10 
 }
 
 enum Department {
@@ -348,6 +349,7 @@ enum Certificate {
   K3_LINGKUNGAN
   WELDER_KEMENKER
   WELDER_BNSP
+  AUDITOR_SMKP // updated on 2025-10-20
   NONE
 }
 
